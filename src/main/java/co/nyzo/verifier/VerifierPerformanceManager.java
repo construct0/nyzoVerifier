@@ -32,6 +32,9 @@ public class VerifierPerformanceManager {
 
     public static final File scoreFile = new File(Verifier.dataRootDirectory, "performance_scores_v3");
 
+    private static final String performanceScoreDecrementNoActiveInCycleVerifierKey = "performance_score_decrement_no_active_incycle_verifier";
+    private static final boolean performanceScoreDecrementNoActiveInCycleVerifier = PreferencesUtil.getBoolean(performanceScoreDecrementNoActiveInCycleVerifierKey, false);
+
     private static final BiFunction<Integer, Integer, Integer> mergeFunction =
             new BiFunction<Integer, Integer, Integer>() {
                 @Override
@@ -66,9 +69,12 @@ public class VerifierPerformanceManager {
 
                 if (ByteUtil.arraysAreEqual(vote.getHash(), block.getHash())) {
 
-                    // Due to the current network state (frozen edge 23530693 - 500,000 blocks edge gap), a verifier is now only considered eligible for a score decrement when an in-cycle verifier is active.
-                    if(!NodeManager.inCycleVerifierIsActive(verifierIdentifier)){
-                        continue;
+                    // Default if not set to "true" by the verifier operator = false
+                    if(performanceScoreDecrementNoActiveInCycleVerifier){
+                        // A verifier is now only considered eligible for a score decrement when an in-cycle verifier is not active.
+                        if(!NodeManager.inCycleVerifierIsActive(verifierIdentifier)){
+                            continue;
+                        }
                     }
 
                     verifierScoreMap.merge(verifierIdentifier, perVoteDecrement, mergeFunction);
