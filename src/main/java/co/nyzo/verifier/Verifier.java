@@ -28,6 +28,9 @@ public class Verifier {
     private static final String alwaysTrackBlockchainKey = "always_track_blockchain";
     private static final boolean alwaysTrackBlockchain = PreferencesUtil.getBoolean(alwaysTrackBlockchainKey, false);
 
+    private static final String enableFastestBlockVotesRecoveryRequestKey = "enable_fastest_block_votes_recovery_request";
+    private static final boolean enableFastestBlockVotesRecoveryRequest = PreferencesUtil.getBoolean(enableFastestBlockVotesRecoveryRequestKey, false);
+
     private static final AtomicBoolean alive = new AtomicBoolean(false);
     private static byte[] privateSeed = null;
     private static String nickname = null;
@@ -519,13 +522,20 @@ public class Verifier {
                         NewVerifierQueueManager.updateVote();
                     }
 
+                    // If a block has not been produced for 15 minutes and the last vote request timestamp was more than 1 second ago (opt-in using a preference flag)
+                    boolean attemptFastestBlockVotesRequest = inCycle() && !frozeBlock && (frozenEdge.getVerificationTimestamp() < (System.currentTimeMillis() - 900000L)) && (lastVoteRequestTimestamp < (System.currentTimeMillis() - 1000L));
+                    // Or 2 seconds ago
+                    boolean attemptFastBlockVotesRequest = attemptFastestBlockVotesRequest && (lastVoteRequestTimestamp < (System.currentTimeMillis() - 2000L));
+                    // Or if a block has not been produced for 30 seconds and the last vote request timestamp was more than 4 seconds ago
+                    boolean attemptRegularBlockVotesRequest = inCycle() && !frozeBlock && (frozenEdge.getVerificationTimestamp() < (System.currentTimeMillis() - 30000L)) && (lastVoteRequestTimestamp < (System.currentTimeMillis() - 4000L));
+
+                    boolean attemptBlockVotesRequest = attemptFastBlockVotesRequest || (attemptFastestBlockVotesRequest && enableFastestBlockVotesRecoveryRequest) || attemptRegularBlockVotesRequest;
+                    
                     // This is an additional recovery operation for when the cycle is in a bad state. To avoid a huge
                     // spike in activity, this is a deliberately slow process. It will break through some stalls that
                     // are difficult to handle otherwise, and it is a low-enough intensity that it will not cause the
                     // cycle to become even more stressed.
-                    if (inCycle() && !frozeBlock &&
-                            frozenEdge.getVerificationTimestamp() < System.currentTimeMillis() - 30000L &&
-                            lastVoteRequestTimestamp < System.currentTimeMillis() - 4000L) {
+                    if (attemptBlockVotesRequest) {
                         lastVoteRequestTimestamp = System.currentTimeMillis();
                         requestMissingVotes(frozenEdge.getBlockHeight() + 1L);
                         requestBlockWithVotes();
