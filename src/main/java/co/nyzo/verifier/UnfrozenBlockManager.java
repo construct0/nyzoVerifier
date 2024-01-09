@@ -364,24 +364,69 @@ public class UnfrozenBlockManager {
         byte[] leadingHash = BlockVoteManager.leadingHashForHeight(heightToFreeze, voteCountWrapper);
         int voteCount = voteCountWrapper.get();
 
-        // Calculate the default vote-count threshold. When voting is taking a long time, a threshold as low as 50% is acceptable. Each 60 seconds that pass since the leading block was verified reduces the number of needed votes by 1.
+        // The current cycle length
         int votingPoolSize = BlockManager.inGenesisCycle() ? NodeManager.getMeshSizeForGenesisCycleVoting() : BlockManager.currentCycleLength();
+
+        // The default vote count threshold
         int defaultVoteCountThreshold = votingPoolSize * (3 / 4);
 
-        if(!BlockManager.inGenesisCycle()){
-            Block block = unfrozenBlockAtHeight(heightToFreeze, leadingHash);
+        // A first pathway
+        // A map of versions, one version for each in-cycle node
+        // To lower network connectivity this is not requested before hand, other factors determine if a request should be performed in the NodeManager.getInCycleNodeVersions function.
+        Map<Node, Version> versionMap = NodeManager.getInCycleNodeVersions(false, 1);
+        Collection<Version> versionSet = versionMap.values();
 
-            if(block == null){
-                LogUtil.println("Could not determine unfrozen block at height " + heightToFreeze);
-            } else {
-                long timeSinceVerification = System.currentTimeMillis() - block.getVerificationTimestamp();
-                int timeBasedVoteReduction = (int)(Math.min(timeSinceVerification / 60000L, BlockManager.currentCycleLength() / 4));
-                defaultVoteCountThreshold -= timeBasedVoteReduction;
+        // The minimum version and subversion required to be considered a "passing" verifier for the logic that follows.
+        int minimumVersion = 644;
+        int minimumSubVersion = 6;
+        int amountOfVerifiersPassing = 0;
 
-                // This is an extra check to ensure, and clearly show in code, that the voting threshold past the Genesis cycle is never less than half the cycle.
-                defaultVoteCountThreshold = Math.max((BlockManager.currentCycleLength() + 1) / 2, defaultVoteCountThreshold);
+        for(int i=0; i < versionSet.size(); i++){
+            Version version = versionSet.iterator().next();
+
+            if(version.getVersion() >= minimumVersion && version.getSubVersion() >= minimumSubVersion){
+                amountOfVerifiersPassing++;
             }
         }
+
+        // The percentage of verifiers which passed, relative to the cycle length
+        double percentageOfVerifiersPassing = votingPoolSize / amountOfVerifiersPassing;
+
+        // A secondary pathway
+        // The minimum Version is released on 09/01/2024, but the release note is expected to be released on 11/01/2024.
+        Calendar calendarStartDescend = Calendar.getInstance();
+        calendarStartDescend.set(2024, 01, 11);
+
+        // The current calendar
+        Calendar calendarNow = Calendar.getInstance(Locale.ENGLISH);
+
+        // We calculate the difference between both calendars
+        long daysSinceDescend = Math.abs(CalendarUtil.calculateDayDifference(calendarStartDescend, calendarNow));
+
+        // And we determine what an appropriate amount of default-vote threshold is, but we don't set it just yet.
+        int startPercentage = 100;
+        int decrementPerDay = 3;
+        long resultCalendarPercentage = (startPercentage - (decrementPerDay * daysSinceDescend));    
+        
+        // If 8 days have passed or more than 75% of verifiers have upgraded to the aforementioned minimum Version
+        if(resultCalendarPercentage < 75 || percentageOfVerifiersPassing > 75){
+            // We calculate the default vote-count threshold. When voting is taking a long time, a threshold as low as 50% is acceptable. Each 60 seconds that pass since the leading block was verified reduces the number of needed votes by 1.
+
+            if(!BlockManager.inGenesisCycle()){
+                Block block = unfrozenBlockAtHeight(heightToFreeze, leadingHash);
+
+                if(block == null){
+                    LogUtil.println("Could not determine unfrozen block at height " + heightToFreeze);
+                } else {
+                    long timeSinceVerification = System.currentTimeMillis() - block.getVerificationTimestamp();
+                    int timeBasedVoteReduction = (int)(Math.min(timeSinceVerification / 60000L, BlockManager.currentCycleLength() / 4));
+                    defaultVoteCountThreshold -= timeBasedVoteReduction;
+
+                    // This is an extra check to ensure, and clearly show in code, that the voting threshold past the Genesis cycle is never less than half the cycle.
+                    defaultVoteCountThreshold = Math.max((BlockManager.currentCycleLength() + 1) / 2, defaultVoteCountThreshold);
+                }
+            }
+        }   
 
         // If the vote count is greater than the threshold, freeze the block. Previously there was a delay ad a second check here, but it will no longer have any effect due to the new vote-flip mechanism.
         int voteCountThreshold = thresholdOverrides.containsKey(heightToFreeze) ?

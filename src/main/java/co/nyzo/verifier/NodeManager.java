@@ -38,6 +38,7 @@ public class NodeManager {
     public static final File nodeFile = new File(Verifier.dataRootDirectory, "nodes");
 
     private static Map<Node, Version> incycleNodeVersionMap = null;
+    private static long incycleNodeVersionMapLastHydratedTimestamp = 0;
 
     static {
         loadPersistedNodes();
@@ -209,8 +210,8 @@ public class NodeManager {
         return activeCycleIdentifiers.contains(identifier);
     }
 
-    public Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
-        if(requestBeforehand || incycleNodeVersionMap == null){
+    public static Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
+        if(requestBeforehand || incycleNodeVersionMap == null || incycleNodeVersionMapLastHydratedTimestamp < (System.currentTimeMillis() + 900000L)){
             NodeManager.sendVersionRequests(activeCycleIpAddresses.size(), true, versionRequestReason < 0 ? 0 : versionRequestReason, null);
         }
 
