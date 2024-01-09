@@ -17,6 +17,8 @@ public class FieldByteSize {
     public static final int maximumSenderDataLength = 32;
     public static final int messageLength = 4;
     public static final int port = 4;
+    public static final int versionRequestReason = 4;
+    public static final int version = 8;
     public static final int rolloverTransactionFees = 1;
     public static final int seed = 32;
     public static final int timestamp = 8;

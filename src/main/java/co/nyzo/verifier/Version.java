@@ -2,14 +2,23 @@ package co.nyzo.verifier;
 
 public class Version {
 
-    private static final int version = 644;
-    private static final int subVersion = 2;
+    private int version = 644;
+    private int subVersion = 3;
 
-    public static int getVersion() {
+    public Version(){
+
+    }
+
+    public Version(int version, int subVersion){
+        this.version = version;
+        this.subVersion = subVersion;
+    }
+
+    public int getVersion() {
         return version;
     }
 
-    public static int getSubVersion(){
+    public int getSubVersion(){
         return subVersion;
     }
 }

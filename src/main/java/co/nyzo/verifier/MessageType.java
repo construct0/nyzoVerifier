@@ -62,6 +62,8 @@ public enum MessageType {
     MinimalBlockResponse52(52),   // currently unused -- UDP-only message
     IpAddressRequest53(53),
     IpAddressResponse54(54),
+    VersionRequest55(55),
+    VersionResponse56(56),
 
     // test messages
     Ping200(200),

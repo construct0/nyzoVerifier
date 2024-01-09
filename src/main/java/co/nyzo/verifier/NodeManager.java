@@ -37,6 +37,8 @@ public class NodeManager {
     private static boolean haveNodeHistory = PersistentData.getBoolean(haveNodeHistoryKey, false);
     public static final File nodeFile = new File(Verifier.dataRootDirectory, "nodes");
 
+    private static Map<Node, Version> incycleNodeVersionMap = null;
+
     static {
         loadPersistedNodes();
     }
@@ -206,6 +208,14 @@ public class NodeManager {
     public static boolean inCycleVerifierIsActive(ByteBuffer identifier){
         return activeCycleIdentifiers.contains(identifier);
     }
+
+    public Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
+        if(requestBeforehand || incycleNodeVersionMap == null){
+            NodeManager.sendVersionRequests(activeCycleIpAddresses.size(), true, versionRequestReason < 0 ? 0 : versionRequestReason, null);
+        }
+
+        return incycleNodeVersionMap;
+    }
  
     public static boolean connectedToMesh() {
 
@@ -294,9 +304,73 @@ public class NodeManager {
             }
         }
 
+        LogUtil.println("[NodeManager(activeCycleIdentifiers=" + activeCycleIdentifiers.size() + ", activeCycleIpAddresses=" + activeCycleIpAddresses.size() + ", missingInCycleVerifiers=" + missingInCycleVerifiers.toString().split(",").length + ")]");
         NodeManager.activeCycleIdentifiers = activeCycleIdentifiers;
         NodeManager.activeCycleIpAddresses = activeCycleIpAddresses;
         NodeManager.missingInCycleVerifiers = missingInCycleVerifiers.toString();
+    }
+
+    public static void sendVersionRequests(int count, boolean inCycleOnly, int versionRequestReason, MessageCallback messageCallback){
+        if(count <= 0){
+            return;
+        }
+
+        LogUtil.println("[NodeManager] Sending " + count + " version requests..");
+
+        try {
+            Set<ByteBuffer> ipAddresses = NodeManager.activeCycleIpAddresses;
+
+            // Only used when messageCallback is null
+            Map<Node, Version> result = new ConcurrentHashMap<Node, Version>();
+
+            for(int i = 0; i < count; i++){
+                ByteBuffer ipAddressBuffer = null;
+
+                try {
+                    ipAddressBuffer = ipAddresses.iterator().next();
+                } catch (NoSuchElementException e){
+                    break;
+                }
+                
+                if(!inCycleOnly || ipAddressInCycle(ipAddressBuffer)){
+                    Node existingNode = ipAddressToNodeMap.get(ipAddressBuffer);
+
+                    if(existingNode == null){
+                        continue;
+                    }
+
+                    if(existingNode.getPortTcp() <= 0){
+                        continue;
+                    }
+
+                    Message versionRequestMessage = new Message(MessageType.VersionRequest55, new VersionRequest(versionRequestReason));
+
+                    Message.fetchTcp(IpUtil.addressAsString(ipAddressBuffer.array()), existingNode.getPortTcp(), versionRequestMessage, messageCallback != null ? messageCallback :
+                        new MessageCallback() {
+                            @Override
+                            public void responseReceived(Message message) {
+                                if (message != null && message.getContent() instanceof VersionResponse) {
+                                    VersionResponse response = (VersionResponse)message.getContent();
+
+                                    if(result.getOrDefault(existingNode, null) != null){
+                                        return;
+                                    }
+
+                                    result.put(existingNode, new Version(response.getVersion(), response.getSubVersion()));
+                                }
+                            }
+                        }
+                    );
+                }
+            }
+
+            if(inCycleOnly && messageCallback == null){
+                incycleNodeVersionMap = result;
+            }
+        } catch (Exception e){
+            LogUtil.println("[NodeManager][1/2] Failed to send " + count + " version requests");
+            LogUtil.println("[NodeManager][2/2] " + e.getStackTrace().toString());
+        }
     }
 
     public static void enqueueNodeJoinMessage(byte[] ipAddress, int port) {
