@@ -29,13 +29,13 @@ public class MeshListener {
     // number of active connections. Whitelisted IP addresses are not subject to any of these limits, though their
     // connections do count toward active connections.
     private static final int maximumConcurrentConnectionsPerIpAbsolute =
-            PreferencesUtil.getInt("maximum_concurrent_connections_per_ip", 5);
+            PreferencesUtil.getInt("maximum_concurrent_connections_per_ip",10);
     private static final int concurrentConnectionThrottleThreshold =
-            PreferencesUtil.getInt("concurrent_connection_throttle_threshold", 500);
+            PreferencesUtil.getInt("concurrent_connection_throttle_threshold", 900);
     private static final double concurrentConnectionReductionRate =
-            PreferencesUtil.getDouble("concurrent_connection_reduction_rate", 0.02);
+            PreferencesUtil.getDouble("concurrent_connection_reduction_rate", 0.04);
     private static final int maximumConcurrentConnections =
-            PreferencesUtil.getInt("maximum_concurrent_connections", 1000);
+            PreferencesUtil.getInt("maximum_concurrent_connections", 2500);
 
     private static final AtomicBoolean aliveTcp = new AtomicBoolean(false);
     private static final AtomicBoolean aliveUdp = new AtomicBoolean(false);
