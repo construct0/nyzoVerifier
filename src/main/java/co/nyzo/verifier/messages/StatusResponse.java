@@ -26,7 +26,7 @@ public class StatusResponse implements MessageObject {
         if (TestnetUtil.testnet) {
             lines.add("*** IN TESTNET MODE ***");
         }
-        lines.add("version: " + Version.getVersion() + "." + Version.getSubVersion());
+        lines.add("version: " + new Version().getVersion() + "." + new Version().getSubVersion());
         lines.add("ID: " + PrintUtil.compactPrintByteArray(Verifier.getIdentifier()));
         lines.add("mesh: " + NodeManager.getNumberOfNodesInMap() + " total, " +
                 NodeManager.getNumberOfActiveCycleIdentifiers() + " in cycle");

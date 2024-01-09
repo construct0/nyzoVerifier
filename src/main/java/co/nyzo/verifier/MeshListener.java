@@ -561,7 +561,7 @@ public class MeshListener {
 
                     StatusResponse.incrementPingCount();
                     response = new Message(MessageType.PingResponse201, new PingResponse("hello, " +
-                            IpUtil.addressAsString(message.getSourceIpAddress()) + "! v=" + Version.getVersion() + "." + Version.getSubVersion()));
+                            IpUtil.addressAsString(message.getSourceIpAddress()) + "! v=" + new Version().getVersion() + "." + new Version().getSubVersion()));
 
                 } else if (messageType == MessageType.UpdateRequest300) {
 

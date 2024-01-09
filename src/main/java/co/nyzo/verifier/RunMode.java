@@ -26,7 +26,7 @@ public enum RunMode {
     }
 
     public static void setRunMode(RunMode runMode) {
-        System.err.println("*** setting run mode of " + runMode + " for version " + Version.getVersion()  + "." + Version.getSubVersion() + " ***");
+        System.err.println("*** setting run mode of " + runMode + " for version " + new Version().getVersion()  + "." + new Version().getSubVersion() + " ***");
         RunMode.runMode = runMode;
     }
 }

@@ -21,7 +21,7 @@ public class Client {
         BlockManager.initialize();
 
         CommandOutput output = new CommandOutputConsole();
-        ConsoleUtil.printTable(output, "Nyzo client, version " + Version.getVersion() + "." + Version.getSubVersion());
+        ConsoleUtil.printTable(output, "Nyzo client, version " + new Version().getVersion() + "." + new Version().getSubVersion());
 
         // Get any ambiguous command strings from the command manager.
         Set<String> ambiguousCommandStrings = CommandManager.ambiguousCommandStrings();

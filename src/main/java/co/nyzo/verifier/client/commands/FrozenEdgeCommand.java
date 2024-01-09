@@ -75,7 +75,7 @@ public class FrozenEdgeCommand implements Command {
         } else {
             table.addRow(block.getBlockHeight(), ByteUtil.arrayAsStringWithDashes(block.getHash()),
                     block.getVerificationTimestamp(), (int) (BlockManager.openEdgeHeight(false) -
-                            block.getBlockHeight()), Version.getVersion() + "." + Version.getSubVersion());
+                            block.getBlockHeight()), new Version().getVersion() + "." + new Version().getSubVersion());
         }
 
         // Return the result.

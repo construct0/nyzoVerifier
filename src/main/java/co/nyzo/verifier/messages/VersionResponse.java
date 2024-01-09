@@ -13,8 +13,8 @@ public class VersionResponse implements MessageObject {
     private int subVersion;
 
     public VersionResponse(){
-        this.version = Version.getVersion();
-        this.subVersion = Version.getSubVersion();
+        this.version = new Version().getVersion();
+        this.subVersion = new Version().getSubVersion();
     }
 
     public VersionResponse(int version, int subVersion){
