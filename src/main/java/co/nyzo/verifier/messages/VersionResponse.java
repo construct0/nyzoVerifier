@@ -47,6 +47,7 @@ public class VersionResponse implements MessageObject {
         return result;
     }
 
+    // Untested and unused
     public static VersionResponse fromByteBuffer(ByteBuffer buffer){
         VersionResponse result = null;
 

@@ -212,6 +212,7 @@ public class NodeManager {
 
     public static Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
         if(requestBeforehand || incycleNodeVersionMap == null || incycleNodeVersionMapLastHydratedTimestamp < (System.currentTimeMillis() + 900000L)){
+            incycleNodeVersionMapLastHydratedTimestamp = System.currentTimeMillis();
             NodeManager.sendVersionRequests(activeCycleIpAddresses.size(), true, versionRequestReason < 0 ? 0 : versionRequestReason, null);
         }
 

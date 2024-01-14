@@ -33,9 +33,9 @@ public class MeshListener {
     private static final int concurrentConnectionThrottleThreshold =
             PreferencesUtil.getInt("concurrent_connection_throttle_threshold", 900);
     private static final double concurrentConnectionReductionRate =
-            PreferencesUtil.getDouble("concurrent_connection_reduction_rate", 0.04);
+            PreferencesUtil.getDouble("concurrent_connection_reduction_rate", 0.032);
     private static final int maximumConcurrentConnections =
-            PreferencesUtil.getInt("maximum_concurrent_connections", 2500);
+            PreferencesUtil.getInt("maximum_concurrent_connections", 2000);
 
     private static final AtomicBoolean aliveTcp = new AtomicBoolean(false);
     private static final AtomicBoolean aliveUdp = new AtomicBoolean(false);

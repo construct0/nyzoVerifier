@@ -378,7 +378,7 @@ public class UnfrozenBlockManager {
 
         // The minimum version and subversion required to be considered a "passing" verifier for the logic that follows.
         int minimumVersion = 644;
-        int minimumSubVersion = 6;
+        int minimumSubVersion = 7;
         int amountOfVerifiersPassing = 0;
 
         for(int i=0; i < versionSet.size(); i++){
@@ -390,12 +390,12 @@ public class UnfrozenBlockManager {
         }
 
         // The percentage of verifiers which passed, relative to the cycle length
-        double percentageOfVerifiersPassing = votingPoolSize / amountOfVerifiersPassing;
+        double percentageOfVerifiersPassing = amountOfVerifiersPassing / votingPoolSize;
 
         // A secondary pathway
-        // The minimum Version is released on 09/01/2024, but the release note is expected to be released on 11/01/2024.
+        // The version is released on 14/01/2024, one extra day of leeway is given due to the release being on a sunday.
         Calendar calendarStartDescend = Calendar.getInstance();
-        calendarStartDescend.set(2024, 01, 11);
+        calendarStartDescend.set(2024, 01, 15);
 
         // The current calendar
         Calendar calendarNow = Calendar.getInstance(Locale.ENGLISH);
