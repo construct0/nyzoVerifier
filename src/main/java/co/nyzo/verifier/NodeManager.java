@@ -315,6 +315,12 @@ public class NodeManager {
 
     public static void sendVersionRequests(int count, boolean inCycleOnly, int versionRequestReason, MessageCallback messageCallback){
         if(count <= 0){
+            LogUtil.println("[NodeManager] Sending version requests to 0 nodes or less is not supported");
+            return;
+        }
+
+        if(!inCycleOnly){
+            LogUtil.println("[NodeManager] Sending version requests to queue nodes is currently not implemented");
             return;
         }
 
@@ -335,7 +341,7 @@ public class NodeManager {
                     break;
                 }
                 
-                if(!inCycleOnly || ipAddressInCycle(ipAddressBuffer)){
+                if(ipAddressInCycle(ipAddressBuffer)){
                     Node existingNode = ipAddressToNodeMap.get(ipAddressBuffer);
 
                     if(existingNode == null){
@@ -367,7 +373,7 @@ public class NodeManager {
                 }
             }
 
-            if(inCycleOnly && messageCallback == null){
+            if(messageCallback == null){
                 incycleNodeVersionMap = result;
             }
         } catch (Exception e){
