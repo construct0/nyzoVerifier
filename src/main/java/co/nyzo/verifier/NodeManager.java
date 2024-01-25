@@ -37,7 +37,7 @@ public class NodeManager {
     private static boolean haveNodeHistory = PersistentData.getBoolean(haveNodeHistoryKey, false);
     public static final File nodeFile = new File(Verifier.dataRootDirectory, "nodes");
 
-    private static Map<Node, Version> incycleNodeVersionMap = null;
+    private static Map<Node, Version> incycleNodeVersionMap = new ConcurrentHashMap<>();
     private static long incycleNodeVersionMapLastHydratedTimestamp = 0;
 
     static {
@@ -211,9 +211,10 @@ public class NodeManager {
     }
 
     public static Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
-        if(requestBeforehand || incycleNodeVersionMap == null || incycleNodeVersionMapLastHydratedTimestamp < (System.currentTimeMillis() + 900000L)){
+        if(requestBeforehand || incycleNodeVersionMapLastHydratedTimestamp < (System.currentTimeMillis() - 900000L)) {
             incycleNodeVersionMapLastHydratedTimestamp = System.currentTimeMillis();
             NodeManager.sendVersionRequests(activeCycleIpAddresses.size(), true, versionRequestReason < 0 ? 0 : versionRequestReason, null);
+
         }
 
         return incycleNodeVersionMap;

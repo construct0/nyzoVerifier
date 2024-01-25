@@ -371,31 +371,85 @@ public class UnfrozenBlockManager {
         int defaultVoteCountThreshold = votingPoolSize * (3 / 4);
 
         // A first pathway
-        // A map of versions, one version for each in-cycle node
-        // To lower network connectivity this is not requested before hand, other factors determine if a request should be performed in the NodeManager.getInCycleNodeVersions function.
+        // A map of versions, one version for each in-cycle verifier node
+        // To lower network connectivity this is not requested before hand, other factors determine if a request should be performed, these factors can be found in the NodeManager.getInCycleNodeVersions function
         Map<Node, Version> versionMap = NodeManager.getInCycleNodeVersions(false, 1);
-        Collection<Version> versionSet = versionMap.values();
+        
+        // The version map above pertains to nodes, one verifier can have multiple nodes running and skew the end result, the logic below reduces the map to verifier identifier:version whereby the version is the highest version for that identifier in the versionMap
+        Map<byte[], Version> identifierVersionMap = new HashMap<>();
+
+        // Every entry from the versionMap is checked
+        for(Node node : versionMap.keySet()){
+            Version nodeVersion = versionMap.get(node);
+            byte[] nodeIdentifier = node.getIdentifier();
+
+            // An iterator is used to loop over the existing Map, since we may modify it within the following block
+            Iterator<byte[]> identifierVersionMapIterator = identifierVersionMap.keySet().iterator();
+
+            while(identifierVersionMapIterator.hasNext()) {
+                byte[] existingKey = identifierVersionMapIterator.next();
+
+                // If the identifier does occur as key in the Map
+                if(Arrays.equals(existingKey, nodeIdentifier)) {
+                    Version existingIdentifierVersion = identifierVersionMap.get(existingKey);
+
+                    if(existingIdentifierVersion != null) {
+                        // Version instance is not null
+                        // We check if the version of this node is larger than the already set version
+                        if((nodeVersion.getVersion() > existingIdentifierVersion.getVersion()) || (nodeVersion.getVersion() == existingIdentifierVersion.getVersion() && nodeVersion.getSubVersion() > existingIdentifierVersion.getSubVersion())) {
+                            // If it is, we replace it by the node's version
+                            identifierVersionMap.put(existingKey, nodeVersion);
+                        }
+                    } else {
+                        // Version instance is null, removing entry
+                        identifierVersionMap.remove(existingKey);
+                    }
+                }
+            }
+
+            // If the identifier does not occur as key in the Map
+            boolean identifierVersionEntryExists = false;
+
+            for(byte[] existingKey : identifierVersionMap.keySet()) {
+                if(Arrays.equals(existingKey, nodeIdentifier)) {
+                    identifierVersionEntryExists = true;
+                }
+            }
+
+            // It is added
+            if(!identifierVersionEntryExists){
+                identifierVersionMap.put(nodeIdentifier, nodeVersion);
+            }   
+        }
+
+        // All versions
+        Collection<Version> versionSet = identifierVersionMap.values();
 
         // The minimum version and subversion required to be considered a "passing" verifier for the logic that follows.
         int minimumVersion = 644;
-        int minimumSubVersion = 7;
+        int minimumSubVersion = 8;
         int amountOfVerifiersPassing = 0;
 
         for(int i=0; i < versionSet.size(); i++){
             Version version = versionSet.iterator().next();
 
-            if(version.getVersion() >= minimumVersion && version.getSubVersion() >= minimumSubVersion){
+            if(version.getVersion() > minimumVersion) {
+                amountOfVerifiersPassing++;
+                continue;
+            }
+
+            if(version.getVersion() == minimumVersion && version.getSubVersion() >= minimumSubVersion){
                 amountOfVerifiersPassing++;
             }
         }
 
         // The percentage of verifiers which passed, relative to the cycle length
-        double percentageOfVerifiersPassing = amountOfVerifiersPassing / votingPoolSize;
+        double percentageOfVerifiersPassing = (amountOfVerifiersPassing / votingPoolSize) * 100;
 
         // A secondary pathway
-        // The version is released on 14/01/2024, one extra day of leeway is given due to the release being on a sunday.
+        // The version's subversion is released on 25/01/2024
         Calendar calendarStartDescend = Calendar.getInstance();
-        calendarStartDescend.set(2024, 01, 15);
+        calendarStartDescend.set(2024, 01, 25);
 
         // The current calendar
         Calendar calendarNow = Calendar.getInstance(Locale.ENGLISH);
