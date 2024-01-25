@@ -21,7 +21,7 @@ public class NodeManager {
     private static String missingInCycleVerifiers = "";
 
     private static final int maximumNodesPerInCycleVerifier = 6;
-    private static final int maximumNewNodeMapSize = 1000;
+    private static final int maximumNewNodeMapSize = 10000;
     private static final Map<ByteBuffer, Integer> newNodeIpToPortMap = new ConcurrentHashMap<>();
 
     private static final Map<ByteBuffer, Node> ipAddressToNodeMap = new ConcurrentHashMap<>();
