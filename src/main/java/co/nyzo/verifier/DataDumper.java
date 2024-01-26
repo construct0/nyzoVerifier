@@ -21,8 +21,27 @@ public class DataDumper {
 
     public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes");
 
+    public DataDumper(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                dump();
+                
+                try {
+					Thread.sleep(5000);
+				} catch (InterruptedException e) {
+                    LogUtil.println("[DataDumper]: Thread.sleep InterruptedException");
+                }
+
+                run();
+            }
+        }).start();
+    }
 
     public static void dump(){
+        LogUtil.println("[DataDumper][dump]: Starting dump...");
+
+
         if(!NodeManager.connectedToMesh()){
             LogUtil.println("[DataDumper][dump]: Skipping dump due to not being connected to the mesh yet");
             return;
@@ -31,6 +50,9 @@ public class DataDumper {
         Map<String, Map<ByteBuffer, Node>> meshParticipants = DataDumper.getMeshParticipants();
         
         _persist(meshParticipantsFile, meshParticipants);
+
+
+        LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
 
     // identifier : [ip address : node]
@@ -105,6 +127,11 @@ public class DataDumper {
                     result.get(iv).put(k, v);
                 }
             }
+
+            // the identifier is known, but we don't have any nodes to include in the result
+            if(!result.keySet().contains(iv)) {
+                result.put(iv, new HashMap<>());
+            }
         }); 
 
         // ret
@@ -112,7 +139,7 @@ public class DataDumper {
     }
 
     private static void _persist(File file, Object object){
-        _persist(file, JsonRenderer.toJson(object));
+        _persist(file, JsonRenderer.toJson(new DataDumpResult(object)));
     }
 
     private static void _persist(File file, String json){
