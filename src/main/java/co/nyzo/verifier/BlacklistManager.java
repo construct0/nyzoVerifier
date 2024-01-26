@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class BlacklistManager {
 
-    private static final long blacklistDuration = 1000L * 60L * 10L;  // ten minutes
+    private static final long blacklistDuration = 1000L * 60L * 1L;  // 1 minute
     private static final Map<ByteBuffer, Long> blacklistedAddresses = new HashMap<>();
 
     public static void addToBlacklist(byte[] ipAddress) {
