@@ -24,7 +24,7 @@ public class DataDumper {
 
     public static void dump(){
         if(!NodeManager.connectedToMesh()){
-            LogUtil.println("[NodeManager][dump]: Skipping dump due to not being connected to the mesh yet");
+            LogUtil.println("[DataDumper][dump]: Skipping dump due to not being connected to the mesh yet");
             return;
         }
 
@@ -124,7 +124,7 @@ public class DataDumper {
             writer = new BufferedWriter(new FileWriter(tempFile));
             writer.write(json);
         } catch (Exception e){
-            LogUtil.println("[NodeManager][_persist]: Failed to write json to temp file with path " + tempFile.getAbsolutePath());
+            LogUtil.println("[DataDumper][_persist]: Failed to write json to temp file with path " + tempFile.getAbsolutePath());
         }
 
         try {
@@ -132,7 +132,7 @@ public class DataDumper {
                 writer.close();
             }
         } catch (Exception e){
-            LogUtil.println("[NodeManager][_persist]: Failed to close file writer for temp file with path " + tempFile.getAbsolutePath());
+            LogUtil.println("[DataDumper][_persist]: Failed to close file writer for temp file with path " + tempFile.getAbsolutePath());
         }
 
         try {
@@ -143,7 +143,7 @@ public class DataDumper {
                 StandardCopyOption.REPLACE_EXISTING
             );
         } catch (Exception e){
-            LogUtil.println("[NodeManager][_persist]: Failed to move temp file to final file path " + file.getAbsolutePath());
+            LogUtil.println("[DataDumper][_persist]: Failed to move temp file to final file path " + file.getAbsolutePath());
         }
     }
 }
