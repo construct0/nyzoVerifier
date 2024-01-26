@@ -223,7 +223,7 @@ public class Verifier {
                         "connections have been made for a cycle size of %d (%.1f%%)",
                         NodeManager.getNumberOfActiveCycleIdentifiers(), BlockManager.currentCycleLength(),
                         NodeManager.getNumberOfActiveCycleIdentifiers() * 100.0 / BlockManager.currentCycleLength()));
-                System.out.println("missing in-cycle verifiers: " + NodeManager.getMissingInCycleVerifiers());
+                System.out.println("missing in-cycle verifiers: " + NodeManager.getMissingInCycleVerifiers().length());
 
                 // Fetch the mesh from one trusted entry point.
                 numberOfMeshResponsesPending = new AtomicInteger(1);
