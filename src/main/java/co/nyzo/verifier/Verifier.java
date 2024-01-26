@@ -57,6 +57,8 @@ public class Verifier {
 
     private static long initializationTime = 0L;
 
+    private static DataDumper _dataDumper = null;
+
     static {
         // This ensures the seed is always available, even if this class is used from a test script.
         loadPrivateSeed();
@@ -88,6 +90,7 @@ public class Verifier {
             RunMode.setRunMode(RunMode.Verifier);
             BlockManager.initialize();
             start();
+            _dataDumper = new DataDumper();
         }
     }
 
