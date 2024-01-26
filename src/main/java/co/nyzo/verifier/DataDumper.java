@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import co.nyzo.verifier.json.JsonRenderer;
 import co.nyzo.verifier.util.LogUtil;
@@ -57,10 +58,10 @@ public class DataDumper {
 
     // identifier : [ip address : node]
     public static Map<String, Map<ByteBuffer, Node>> getMeshParticipants() {
-        Map<String, Map<ByteBuffer, Node>> result = new HashMap<>();
+        Map<String, Map<ByteBuffer, Node>> result = new ConcurrentHashMap<>();
 
         // identifier byte[] : identifier string with dashes
-        Map<byte[], String> identifierMap = new HashMap<>();
+        Map<byte[], String> identifierMap = new ConcurrentHashMap<>();
 
         // incycle identifiers 
         Set<ByteBuffer> activeInCycleVerifiers = NodeManager.getActiveCycleIdentifiers();
@@ -120,7 +121,7 @@ public class DataDumper {
                 if(Arrays.equals(i, vi)) {
                     if(!result.keySet().contains(iv)) {
                         // there is no entry yet, we add a new kvp to the result
-                        result.put(iv, new HashMap<ByteBuffer, Node>());
+                        result.put(iv, new ConcurrentHashMap<ByteBuffer, Node>());
                     }
 
                     // we add the ip adress node map kvp to the result
@@ -130,7 +131,7 @@ public class DataDumper {
 
             // the identifier is known, but we don't have any nodes to include in the result
             if(!result.keySet().contains(iv)) {
-                result.put(iv, new HashMap<>());
+                result.put(iv, new ConcurrentHashMap<>());
             }
         }); 
 
