@@ -19,6 +19,7 @@ public class NodeManager {
     private static Set<ByteBuffer> activeCycleIdentifiers = ConcurrentHashMap.newKeySet();
     private static Set<ByteBuffer> activeCycleIpAddresses = ConcurrentHashMap.newKeySet();
     private static String missingInCycleVerifiers = "";
+    private static Set<ByteBuffer> missingInCycleVerifiersSet = ConcurrentHashMap.newKeySet();
 
     private static final int maximumNodesPerInCycleVerifier = 6;
     private static final int maximumNewNodeMapSize = 10000;
@@ -171,6 +172,10 @@ public class NodeManager {
         return cycleNodes;
     }
 
+    public static Map<ByteBuffer, Node> getIpAddressToNodeMap(){
+        return ipAddressToNodeMap;
+    }
+
     public static List<Node> getMesh() {
         return new ArrayList<>(ipAddressToNodeMap.values());
     }
@@ -191,8 +196,16 @@ public class NodeManager {
         return activeCycleIdentifiers.size();
     }
 
+    public static Set<ByteBuffer> getActiveCycleIdentifiers(){
+        return activeCycleIdentifiers;
+    }
+
     public static String getMissingInCycleVerifiers() {
         return missingInCycleVerifiers;
+    }
+
+    public static Set<ByteBuffer> getMissingInCycleVerifiersSet(){
+        return missingInCycleVerifiersSet;
     }
 
     public static boolean ipAddressInCycle(ByteBuffer ipAddress) {
@@ -277,6 +290,8 @@ public class NodeManager {
         }
 
         StringBuilder missingInCycleVerifiers;
+        Set<ByteBuffer> missingInCycleVerifiersSet = ConcurrentHashMap.newKeySet();
+
         if (activeCycleIdentifiers.size() == currentCycle.size()) {
             missingInCycleVerifiers = new StringBuilder("*** no verifiers missing ***");
         } else {
@@ -284,6 +299,7 @@ public class NodeManager {
             String separator = "";
             for (ByteBuffer identifier : currentCycle) {
                 if (!activeCycleIdentifiers.contains(identifier)) {
+                    missingInCycleVerifiersSet.add(identifier);
                     missingInCycleVerifiers.append(separator).append(NicknameManager.get(identifier.array()));
                     separator = ",";
                 }
@@ -292,6 +308,7 @@ public class NodeManager {
 
         NodeManager.activeCycleIdentifiers = activeCycleIdentifiers;
         NodeManager.activeCycleIpAddresses = activeCycleIpAddresses;
+        NodeManager.missingInCycleVerifiersSet = missingInCycleVerifiersSet;
         NodeManager.missingInCycleVerifiers = missingInCycleVerifiers.toString();
     }
 
