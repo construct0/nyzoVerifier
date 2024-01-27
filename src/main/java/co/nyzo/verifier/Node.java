@@ -10,7 +10,9 @@ public class Node implements MessageObject {
     private static final int communicationFailureInactiveThreshold = 6;
 
     private byte[] identifier;                    // wallet public key (32 bytes)
+    private String identifierString;
     private byte[] ipAddress;                     // IPv4 address, stored as bytes to keep memory predictable (4 bytes)
+    private String ipAddressString;
     private int portTcp;                          // TCP port number
     private int portUdp;                          // UDP port number, if available
     private long queueTimestamp;                  // this is the timestamp that determines queue placement -- it is
@@ -22,7 +24,9 @@ public class Node implements MessageObject {
     public Node(byte[] identifier, byte[] ipAddress, int portTcp, int portUdp) {
 
         this.identifier = Arrays.copyOf(identifier, FieldByteSize.identifier);
+        this.identifierString = ByteUtil.arrayAsStringWithDashes(this.identifier);
         this.ipAddress = Arrays.copyOf(ipAddress, FieldByteSize.ipAddress);
+        this.ipAddressString = IpUtil.addressAsString(this.ipAddress);
         this.portTcp = portTcp;
         this.portUdp = portUdp;
         this.queueTimestamp = System.currentTimeMillis();
@@ -34,12 +38,20 @@ public class Node implements MessageObject {
         return identifier;
     }
 
+    public String getIdentifierString(){
+        return identifierString;
+    }
+
     public void setIdentifier(byte[] identifier) {
         this.identifier = identifier;
     }
 
     public byte[] getIpAddress() {
         return ipAddress;
+    }
+
+    public String getIpAddressString() {
+        return ipAddressString;
     }
 
     public int getPortTcp() {

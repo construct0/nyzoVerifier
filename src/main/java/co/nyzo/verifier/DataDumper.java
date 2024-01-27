@@ -51,7 +51,7 @@ public class DataDumper {
             return;
         }
 
-        Map<String, Map<ByteBuffer, Node>> meshParticipants = DataDumper.getMeshParticipants();
+        Map<String, Map<String, Node>> meshParticipants = DataDumper.getMeshParticipants();
         
         _persist(meshParticipantsFile, meshParticipants);
 
@@ -60,8 +60,8 @@ public class DataDumper {
     }
 
     // identifier : [ip address : node]
-    public static Map<String, Map<ByteBuffer, Node>> getMeshParticipants() {
-        Map<String, Map<ByteBuffer, Node>> result = new ConcurrentHashMap<>();
+    public static Map<String, Map<String, Node>> getMeshParticipants() {
+        Map<String, Map<String, Node>> result = new ConcurrentHashMap<>();
 
         // identifier byte[] : identifier string with dashes
         Map<byte[], String> identifierMap = new ConcurrentHashMap<>();
@@ -135,17 +135,17 @@ public class DataDumper {
                 if(Arrays.equals(i, vi)) {
                     if(!result.keySet().contains(iv)) {
                         // there is no entry yet, we add a new kvp to the result
-                        result.put(iv, new ConcurrentHashMap<ByteBuffer, Node>());
+                        result.put(iv, new ConcurrentHashMap<String, Node>());
                     }
 
                     // we add the ip adress node map kvp to the result
-                    result.get(iv).put(k, v);
+                    result.get(iv).put(v.getIpAddressString(), v);
                 }
             }
 
             // the identifier is known, but we don't have any nodes to include in the result
             if(!result.keySet().contains(iv)) {
-                result.put(iv, new ConcurrentHashMap<>());
+                result.put(iv, null);
             }
         }); 
 
