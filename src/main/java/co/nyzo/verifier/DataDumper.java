@@ -17,6 +17,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import co.nyzo.verifier.json.JsonRenderer;
 import co.nyzo.verifier.util.LogUtil;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class DataDumper {
     public static final File dataDumpDirectory = new File("/var/www/dumps");
 
@@ -151,7 +154,14 @@ public class DataDumper {
     }
 
     private static void _persist(File file, Object object){
-        _persist(file, JsonRenderer.toJson(new DataDumpResult(object)));
+        ObjectMapper objectMapper = new ObjectMapper();
+        DataDumpResult result = new DataDumpResult(object);
+
+        try {
+            _persist(file, objectMapper.writeValueAsString(result));
+        } catch (JsonProcessingException e){
+            LogUtil.println("[DataDumper][_persist]: failed to convert to json");
+        }
     }
 
     private static void _persist(File file, String json){
