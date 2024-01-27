@@ -8,13 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import co.nyzo.verifier.json.JsonRenderer;
 import co.nyzo.verifier.util.LogUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
