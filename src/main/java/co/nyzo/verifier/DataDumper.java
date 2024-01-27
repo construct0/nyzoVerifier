@@ -114,16 +114,18 @@ public class DataDumper {
         ipAddressNodeMap.values().forEach(n -> {
             for(KeyValuePair<byte[], Boolean> k : identifierMap.keySet()){
                 if(Arrays.equals(k.getKey(), n.getIdentifier())) {
+                    // we are aware of this identifier already
                     return;
                 }
-
-                KeyValuePair<byte[], Boolean> kvp = new KeyValuePair<byte[], Boolean>(n.getIdentifier(), null);
-            
-                identifierMap.put(
-                    kvp,
-                    ByteUtil.arrayAsStringWithDashes(kvp.getKey())
-                );
             }
+
+            // the identifier was not present as active or missing incycle verifier, that means the identifier is not incycle 
+            KeyValuePair<byte[], Boolean> k = new KeyValuePair<>(n.getIdentifier(), false);
+
+            identifierMap.put(
+                k,
+                ByteUtil.arrayAsStringWithDashes(k.getKey())
+            );
         });
         
         LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
