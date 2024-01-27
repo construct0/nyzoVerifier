@@ -65,15 +65,21 @@ public class DataDumper {
 
         // incycle identifiers 
         Set<ByteBuffer> activeInCycleVerifiers = NodeManager.getActiveCycleIdentifiers();
+
+        LogUtil.println("[DataDumper][dump]: " + activeInCycleVerifiers.size() + " active in cycle verifiers");
         
         activeInCycleVerifiers.forEach(i -> identifierMap.put(
             i.array(), 
             ByteUtil.arrayAsStringWithDashes(i.array())  
         ));
 
+        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
+
         // missing incycle identifiers 
         Set<ByteBuffer> missingInCycleVerifiersSet = NodeManager.getMissingInCycleVerifiersSet();
         
+        LogUtil.println("[DataDumper][dump]: " + missingInCycleVerifiersSet.size() + " missing in cycle verifiers");
+
         missingInCycleVerifiersSet.forEach(i -> {
             for(byte[] k : identifierMap.keySet()){
                 if(Arrays.equals(k, i.array())){
@@ -87,9 +93,13 @@ public class DataDumper {
             );
         });
 
+        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
+
         // ip address node map
         Map<ByteBuffer, Node> ipAddressNodeMap = NodeManager.getIpAddressToNodeMap();
         
+        LogUtil.println("[DataDumper][dump]: " + ipAddressNodeMap.keySet().size() + " entries in ip address node map");
+
         ipAddressNodeMap.values().forEach(n -> {
             for(byte[] k : identifierMap.keySet()){
                 if(Arrays.equals(k, n.getIdentifier())) {
@@ -103,6 +113,7 @@ public class DataDumper {
             }
         });
         
+        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
 
         // creating the result
         identifierMap.keySet().forEach(i -> {
