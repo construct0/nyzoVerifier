@@ -7,15 +7,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.xml.crypto.dsig.keyinfo.KeyValue;
 
 import co.nyzo.verifier.util.LogUtil;
 
@@ -48,8 +43,8 @@ public class DataDumper {
         LogUtil.println("[DataDumper][dump]: Starting dump...");
 
 
-        if(!NodeManager.connectedToMesh()){
-            LogUtil.println("[DataDumper][dump]: Skipping dump due to not being connected to the mesh yet");
+        if(!NodeManager.connectedToMeshAndReadyForDataDump()){
+            LogUtil.println("[DataDumper][dump]: Skipping dump due to insufficient amount of data available");
             return;
         }
 
