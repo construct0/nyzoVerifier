@@ -92,6 +92,10 @@ public class Node implements MessageObject {
         this.inCycle = inCycle;
     }
 
+    public boolean getInCycle() {
+        return this.inCycle;
+    }
+
     public boolean isActive() {
         return inactiveTimestamp < 0;
     }
