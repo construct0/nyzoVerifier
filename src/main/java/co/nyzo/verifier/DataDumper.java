@@ -7,10 +7,15 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.xml.crypto.dsig.keyinfo.KeyValue;
 
 import co.nyzo.verifier.util.LogUtil;
 
@@ -60,18 +65,22 @@ public class DataDumper {
     public static Map<String, Map<String, Node>> getMeshParticipants() {
         Map<String, Map<String, Node>> result = new ConcurrentHashMap<>();
 
-        // identifier byte[] : identifier string with dashes
-        Map<byte[], String> identifierMap = new ConcurrentHashMap<>();
+        // identifier byte[], is in cycle : identifier string with dashes
+        Map<KeyValuePair<byte[], Boolean>, String> identifierMap = new ConcurrentHashMap<>();
 
         // incycle identifiers 
         Set<ByteBuffer> activeInCycleVerifiers = NodeManager.getActiveCycleIdentifiers();
 
         LogUtil.println("[DataDumper][dump]: " + activeInCycleVerifiers.size() + " active in cycle verifiers");
         
-        activeInCycleVerifiers.forEach(i -> identifierMap.put(
-            i.array(), 
-            ByteUtil.arrayAsStringWithDashes(i.array())  
-        ));
+        activeInCycleVerifiers.forEach(i -> {
+            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), true);
+
+            identifierMap.put(
+                k, 
+                ByteUtil.arrayAsStringWithDashes(k.getKey())  
+            );
+        });
 
         LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
 
@@ -81,15 +90,17 @@ public class DataDumper {
         LogUtil.println("[DataDumper][dump]: " + missingInCycleVerifiersSet.size() + " missing in cycle verifiers");
 
         missingInCycleVerifiersSet.forEach(i -> {
-            for(byte[] k : identifierMap.keySet()){
-                if(Arrays.equals(k, i.array())){
+            for(KeyValuePair<byte[], Boolean> k : identifierMap.keySet()){
+                if(Arrays.equals(k.getKey(), i.array())){
                     return;
                 }
             }
 
+            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), true);
+
             identifierMap.put(
-                i.array(), 
-                ByteUtil.arrayAsStringWithDashes(i.array())
+                k, 
+                ByteUtil.arrayAsStringWithDashes(k.getKey())
             );
         });
 
@@ -101,14 +112,16 @@ public class DataDumper {
         LogUtil.println("[DataDumper][dump]: " + ipAddressNodeMap.keySet().size() + " entries in ip address node map");
 
         ipAddressNodeMap.values().forEach(n -> {
-            for(byte[] k : identifierMap.keySet()){
-                if(Arrays.equals(k, n.getIdentifier())) {
+            for(KeyValuePair<byte[], Boolean> k : identifierMap.keySet()){
+                if(Arrays.equals(k.getKey(), n.getIdentifier())) {
                     return;
                 }
+
+                KeyValuePair<byte[], Boolean> kvp = new KeyValuePair<byte[], Boolean>(n.getIdentifier(), null);
             
                 identifierMap.put(
-                    n.getIdentifier(),
-                    ByteUtil.arrayAsStringWithDashes(n.getIdentifier())
+                    kvp,
+                    ByteUtil.arrayAsStringWithDashes(kvp.getKey())
                 );
             }
         });
@@ -125,11 +138,14 @@ public class DataDumper {
                 // ip address node
                 Node v = ipAddressNodeMap.get(k);
 
+                // set incycle boolean
+                v.setInCycle(i.getValue());
+
                 // node identifier
                 byte[] vi = v.getIdentifier();
 
                 // the kvp aligns with the identifier from the identifierMap
-                if(Arrays.equals(i, vi)) {
+                if(Arrays.equals(i.getKey(), vi)) {
                     if(!result.keySet().contains(iv)) {
                         // there is no entry yet, we add a new kvp to the result
                         result.put(iv, new ConcurrentHashMap<String, Node>());
