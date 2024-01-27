@@ -223,6 +223,10 @@ public class NodeManager {
         return ipAddressToNodeMap.size() > 1;
     }
 
+    public static boolean connectedToMeshAndReadyForDataDump(){
+        return ((activeCycleIdentifiers.size() + missingInCycleVerifiersSet.size()) == BlockManager.currentCycleLength()) && NodeManager.connectedToMesh();
+    }
+
     public static byte[] identifierForIpAddress(byte[] address) {
 
         byte[] identifier = null;
