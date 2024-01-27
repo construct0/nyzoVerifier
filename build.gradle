@@ -24,11 +24,15 @@ compileJava {
 
 dependencies {
     implementation 'net.i2p.crypto:eddsa:0.2.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.5'
 }
 
 jar {
     archiveBaseName = 'nyzoVerifier'
     archiveVersion = '1.0'
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     manifest {
         attributes(
             'Main-Class': 'co.nyzo.verifier.Verifier'
