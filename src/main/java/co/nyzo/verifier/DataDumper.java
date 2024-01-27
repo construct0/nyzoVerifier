@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class DataDumper {
     public static final File dataDumpDirectory = new File("/var/www/dumps");
 
-    public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes");
+    public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes.json");
 
     public DataDumper(){
         new Thread(new Runnable() {
