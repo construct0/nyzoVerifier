@@ -145,7 +145,7 @@ public class DataDumper {
 
             // the identifier is known, but we don't have any nodes to include in the result
             if(!result.keySet().contains(iv)) {
-                result.put(iv, null);
+                result.put(iv, new ConcurrentHashMap<>());
             }
         }); 
 
