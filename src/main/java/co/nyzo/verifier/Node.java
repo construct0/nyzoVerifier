@@ -18,6 +18,7 @@ public class Node implements MessageObject {
     private long queueTimestamp;                  // this is the timestamp that determines queue placement -- it is
                                                   // when the verifier joined the mesh or when the verifier was last
                                                   // updated
+    private boolean inCycle;
     private long inactiveTimestamp;               // when the verifier was marked as inactive; -1 for active verifiers
     private long communicationFailureCount;       // consecutive communication failures before marking inactive
 
@@ -44,6 +45,7 @@ public class Node implements MessageObject {
 
     public void setIdentifier(byte[] identifier) {
         this.identifier = identifier;
+        this.identifierString = ByteUtil.arrayAsStringWithDashes(identifier);
     }
 
     public byte[] getIpAddress() {
@@ -84,6 +86,10 @@ public class Node implements MessageObject {
 
     public void setInactiveTimestamp(long inactiveTimestamp) {
         this.inactiveTimestamp = inactiveTimestamp;
+    }
+
+    public void setInCycle(boolean inCycle){
+        this.inCycle = inCycle;
     }
 
     public boolean isActive() {
