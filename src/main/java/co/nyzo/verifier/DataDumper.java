@@ -147,7 +147,10 @@ public class DataDumper {
         dedupedQueueMap.keySet().forEach(k -> {
             // the node manager data does not provide the correct identifier, a placeholder identifier is used in order to be able to create a new node 
             // users of the data should refer to the new Node.identifierIsKnown boolean before using the value of the identifier 
-            result.get("queue").put(IpUtil.addressAsString(k.array()), new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0));
+            Node n = new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0);
+            n.setInCycle(false);
+
+            result.get("queue").put(IpUtil.addressAsString(k.array()), n);
         });
 
         identifierMap.keySet().forEach(i -> {
