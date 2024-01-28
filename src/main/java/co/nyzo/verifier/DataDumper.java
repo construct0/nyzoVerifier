@@ -8,10 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import co.nyzo.verifier.util.IpUtil;
 import co.nyzo.verifier.util.LogUtil;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -66,7 +68,7 @@ public class DataDumper {
         // incycle identifiers 
         Set<ByteBuffer> activeInCycleVerifiers = NodeManager.getActiveCycleIdentifiers();
 
-        LogUtil.println("[DataDumper][dump]: " + activeInCycleVerifiers.size() + " active in cycle verifiers");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + activeInCycleVerifiers.size() + " active in cycle verifiers");
         
         activeInCycleVerifiers.forEach(i -> {
             KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), true);
@@ -77,12 +79,12 @@ public class DataDumper {
             );
         });
 
-        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + identifierMap.keySet().size() + " entries in identifier map");
 
         // missing incycle identifiers 
         Set<ByteBuffer> missingInCycleVerifiersSet = NodeManager.getMissingInCycleVerifiersSet();
         
-        LogUtil.println("[DataDumper][dump]: " + missingInCycleVerifiersSet.size() + " missing in cycle verifiers");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + missingInCycleVerifiersSet.size() + " missing in cycle verifiers");
 
         missingInCycleVerifiersSet.forEach(i -> {
             for(KeyValuePair<byte[], Boolean> k : identifierMap.keySet()){
@@ -99,12 +101,12 @@ public class DataDumper {
             );
         });
 
-        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + identifierMap.keySet().size() + " entries in identifier map");
 
         // ip address node map
         Map<ByteBuffer, Node> ipAddressNodeMap = NodeManager.getIpAddressToNodeMap();
         
-        LogUtil.println("[DataDumper][dump]: " + ipAddressNodeMap.keySet().size() + " entries in ip address node map");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + ipAddressNodeMap.keySet().size() + " entries in ip address node map");
 
         ipAddressNodeMap.values().forEach(n -> {
             for(KeyValuePair<byte[], Boolean> k : identifierMap.keySet()){
@@ -123,9 +125,31 @@ public class DataDumper {
             );
         });
         
-        LogUtil.println("[DataDumper][dump]: " + identifierMap.keySet().size() + " entries in identifier map");
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + identifierMap.keySet().size() + " entries in identifier map");
+
+        // new node ip to port map
+        Map<ByteBuffer, Integer> newNodeIpToPortMap = NodeManager.getNewNodeIpToPortMap();
+
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + newNodeIpToPortMap.keySet().size() + " entries in new node ip to port queue map");
+
+        // node join request queue map
+        Map<ByteBuffer, Integer> nodeJoinRequestQueueMap = NodeManager.getNodeJoinRequestQueueMap();
+
+        LogUtil.println("[DataDumper][getMeshParticipants]: " + nodeJoinRequestQueueMap.keySet().size() + " entries in nodejoin requests queue map");
+
+        Map<ByteBuffer, Integer> dedupedQueueMap = _getDeduplicatedMap(newNodeIpToPortMap, nodeJoinRequestQueueMap);
+
+        LogUtil.println("[DataDumper][getMeshParticipants]: removed " + ((newNodeIpToPortMap.keySet().size() + nodeJoinRequestQueueMap.keySet().size()) - dedupedQueueMap.keySet().size()) + " duplicate keys to produce a deduped queue map");
 
         // creating the result
+        result.put("queue", new ConcurrentHashMap<String, Node>());
+
+        dedupedQueueMap.keySet().forEach(k -> {
+            // the node manager data does not provide the correct identifier, a placeholder identifier is used in order to be able to create a new node 
+            // users of the data should refer to the new Node.identifierIsKnown boolean before using the value of the identifier 
+            result.get("queue").put(IpUtil.addressAsString(k.array()), new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0));
+        });
+
         identifierMap.keySet().forEach(i -> {
             // the string representation of the current identifier (value in the map)
             String iv = identifierMap.get(i);
@@ -161,6 +185,53 @@ public class DataDumper {
 
         // ret
         return result;
+    }
+
+    private static Map<ByteBuffer, Integer> _getDeduplicatedMap(Map<ByteBuffer, Integer> map1, Map<ByteBuffer, Integer> map2) {
+        Map<ByteBuffer, Integer> deduplicatedMap = new ConcurrentHashMap<>();
+
+        for (Map.Entry<ByteBuffer, Integer> entry : map1.entrySet()) {
+            if (!_containsKeyWithSameContent(map2, entry.getKey())) {
+                deduplicatedMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        for (Map.Entry<ByteBuffer, Integer> entry : map2.entrySet()) {
+            if (!_containsKeyWithSameContent(map1, entry.getKey())) {
+                deduplicatedMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return deduplicatedMap;
+    }
+
+    private static boolean _containsKeyWithSameContent(Map<ByteBuffer, Integer> map, ByteBuffer key) {
+        for (ByteBuffer mapKey : map.keySet()) {
+            if (_areByteBufferContentsEqual(mapKey, key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean _areByteBufferContentsEqual(ByteBuffer buffer1, ByteBuffer buffer2) {
+        if (buffer1.remaining() != buffer2.remaining()) {
+            return false;
+        }
+
+        int startPosition1 = buffer1.position();
+        int startPosition2 = buffer2.position();
+
+        while (buffer1.hasRemaining() && buffer2.hasRemaining()) {
+            if (buffer1.get() != buffer2.get()) {
+                return false;
+            }
+        }
+
+        buffer1.position(startPosition1);
+        buffer2.position(startPosition2);
+
+        return true;
     }
 
     private static void _persist(File file, Object object){
