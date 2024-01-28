@@ -128,19 +128,19 @@ public class DataDumper {
         
         LogUtil.println("[DataDumper][getMeshParticipants]: " + identifierMap.keySet().size() + " entries in identifier map");
 
-        // new node ip to port map
-        Map<ByteBuffer, Integer> newNodeIpToPortMap = NodeManager.getNewNodeIpToPortMap();
+        // // new node ip to port map
+        // Map<ByteBuffer, Integer> newNodeIpToPortMap = NodeManager.getNewNodeIpToPortMap();
 
-        LogUtil.println("[DataDumper][getMeshParticipants]: " + newNodeIpToPortMap.keySet().size() + " entries in new node ip to port queue map");
+        // LogUtil.println("[DataDumper][getMeshParticipants]: " + newNodeIpToPortMap.keySet().size() + " entries in new node ip to port queue map");
 
-        // node join request queue map
-        Map<ByteBuffer, Integer> nodeJoinRequestQueueMap = NodeManager.getNodeJoinRequestQueueMap();
+        // // node join request queue map
+        // Map<ByteBuffer, Integer> nodeJoinRequestQueueMap = NodeManager.getNodeJoinRequestQueueMap();
 
-        LogUtil.println("[DataDumper][getMeshParticipants]: " + nodeJoinRequestQueueMap.keySet().size() + " entries in nodejoin requests queue map");
+        // LogUtil.println("[DataDumper][getMeshParticipants]: " + nodeJoinRequestQueueMap.keySet().size() + " entries in nodejoin requests queue map");
 
-        Map<ByteBuffer, Integer> dedupedQueueMap = _getDeduplicatedMap(newNodeIpToPortMap, nodeJoinRequestQueueMap);
+        // Map<ByteBuffer, Integer> dedupedQueueMap = _getDeduplicatedMap(newNodeIpToPortMap, nodeJoinRequestQueueMap);
 
-        LogUtil.println("[DataDumper][getMeshParticipants]: removed " + ((newNodeIpToPortMap.keySet().size() + nodeJoinRequestQueueMap.keySet().size()) - dedupedQueueMap.keySet().size()) + " duplicate keys to produce a deduped queue map");
+        // LogUtil.println("[DataDumper][getMeshParticipants]: removed " + ((newNodeIpToPortMap.keySet().size() + nodeJoinRequestQueueMap.keySet().size()) - dedupedQueueMap.keySet().size()) + " duplicate keys to produce a deduped queue map");
 
         // creating the result
         // result.put("queue", new ConcurrentHashMap<String, Node>());
