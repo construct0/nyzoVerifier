@@ -9,6 +9,7 @@ public class Node implements MessageObject {
 
     private static final int communicationFailureInactiveThreshold = 6;
 
+    private boolean identifierIsKnown;
     private byte[] identifier;                    // wallet public key (32 bytes)
     private String identifierString;
     private byte[] ipAddress;                     // IPv4 address, stored as bytes to keep memory predictable (4 bytes)
@@ -24,6 +25,13 @@ public class Node implements MessageObject {
 
     public Node(byte[] identifier, byte[] ipAddress, int portTcp, int portUdp) {
 
+        // This identifier is used as a substitute when the identifier of a queue node is not known (DataDumper.getMeshParticipants)
+        if(Arrays.equals(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), identifier)){
+            this.identifierIsKnown = false;
+        } else {
+            this.identifierIsKnown = true;
+        }
+
         this.identifier = Arrays.copyOf(identifier, FieldByteSize.identifier);
         this.identifierString = ByteUtil.arrayAsStringWithDashes(this.identifier);
         this.ipAddress = Arrays.copyOf(ipAddress, FieldByteSize.ipAddress);
@@ -33,6 +41,10 @@ public class Node implements MessageObject {
         this.queueTimestamp = System.currentTimeMillis();
         this.inactiveTimestamp = -1L;
         this.communicationFailureCount = 0;
+    }
+
+    public boolean getIdentifierIsKnown(){
+        return identifierIsKnown;
     }
 
     public byte[] getIdentifier() {
