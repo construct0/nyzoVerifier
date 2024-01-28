@@ -143,28 +143,28 @@ public class DataDumper {
         LogUtil.println("[DataDumper][getMeshParticipants]: removed " + ((newNodeIpToPortMap.keySet().size() + nodeJoinRequestQueueMap.keySet().size()) - dedupedQueueMap.keySet().size()) + " duplicate keys to produce a deduped queue map");
 
         // creating the result
-        result.put("queue", new ConcurrentHashMap<String, Node>());
+        // result.put("queue", new ConcurrentHashMap<String, Node>());
 
-        _c = 0;
+        // _c = 0;
 
-        dedupedQueueMap.keySet().forEach(k -> {
-            for(ByteBuffer b : ipAddressNodeMap.keySet()) {
-                if(_areByteBufferContentsEqual(k, b)) {
-                    _c++;
-                    return;
-                }
-            }
+        // dedupedQueueMap.keySet().forEach(k -> {
+        //     for(ByteBuffer b : ipAddressNodeMap.keySet()) {
+        //         if(_areByteBufferContentsEqual(k, b)) {
+        //             _c++;
+        //             return;
+        //         }
+        //     }
 
-            // the node manager data does not provide the correct identifier, a placeholder identifier is used in order to be able to create a new node 
-            // users of the data should refer to the new Node.identifierIsKnown boolean before using the value of the identifier 
-            Node n = new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0);
-            n.setInCycle(false);
+        //     // the node manager data does not provide the correct identifier, a placeholder identifier is used in order to be able to create a new node 
+        //     // users of the data should refer to the new Node.identifierIsKnown boolean before using the value of the identifier 
+        //     Node n = new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0);
+        //     n.setInCycle(false);
 
-            result.get("queue").put(IpUtil.addressAsString(k.array()), n);
-        });
+        //     result.get("queue").put(IpUtil.addressAsString(k.array()), n);
+        // });
 
-        LogUtil.println("[DataDumper][getMeshParticipants]: skipped " + _c + " queue map entries due to them being present in the ip address node map");
-        _c = 0;
+        // LogUtil.println("[DataDumper][getMeshParticipants]: skipped " + _c + " queue map entries due to them being present in the ip address node map");
+        // _c = 0;
 
         identifierMap.keySet().forEach(i -> {
             // the string representation of the current identifier (value in the map)
