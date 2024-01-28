@@ -216,6 +216,14 @@ public class NodeManager {
         return nodeJoinRequestsSent.get();
     }
 
+    public static Map<ByteBuffer, Integer> getNewNodeIpToPortMap(){
+        return newNodeIpToPortMap;
+    }
+
+    public static Map<ByteBuffer, Integer> getNodeJoinRequestQueueMap(){
+        return nodeJoinRequestQueue;
+    }
+
     public static boolean connectedToMesh() {
 
         // When we request the node list from another node, it will add this node to the list. So, the minimum number
