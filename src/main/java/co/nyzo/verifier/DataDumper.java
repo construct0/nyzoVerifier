@@ -24,6 +24,8 @@ public class DataDumper {
 
     public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes.json");
 
+    private static Integer _c = 0;
+
     public DataDumper(){
         new Thread(new Runnable() {
             @Override
@@ -53,7 +55,6 @@ public class DataDumper {
         Map<String, Map<String, Node>> meshParticipants = DataDumper.getMeshParticipants();
         
         _persist(meshParticipantsFile, meshParticipants);
-
 
         LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
@@ -144,7 +145,16 @@ public class DataDumper {
         // creating the result
         result.put("queue", new ConcurrentHashMap<String, Node>());
 
+        _c = 0;
+
         dedupedQueueMap.keySet().forEach(k -> {
+            for(ByteBuffer b : ipAddressNodeMap.keySet()) {
+                if(_areByteBufferContentsEqual(k, b)) {
+                    _c++;
+                    return;
+                }
+            }
+
             // the node manager data does not provide the correct identifier, a placeholder identifier is used in order to be able to create a new node 
             // users of the data should refer to the new Node.identifierIsKnown boolean before using the value of the identifier 
             Node n = new Node(ByteUtil.byteArrayFromHexString("0000000000000000-0000000000000000-0000000000000000-0000000000000000", FieldByteSize.identifier), k.array(), 0, 0);
@@ -152,6 +162,9 @@ public class DataDumper {
 
             result.get("queue").put(IpUtil.addressAsString(k.array()), n);
         });
+
+        LogUtil.println("[DataDumper][getMeshParticipants]: skipped " + _c + " queue map entries due to them being present in the ip address node map");
+        _c = 0;
 
         identifierMap.keySet().forEach(i -> {
             // the string representation of the current identifier (value in the map)
