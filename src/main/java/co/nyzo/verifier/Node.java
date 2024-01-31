@@ -33,7 +33,6 @@ public class Node implements MessageObject {
             this.identifierIsKnown = true;
         }
 
-        this.setNickname(NicknameManager.get(identifier));
         this.identifier = Arrays.copyOf(identifier, FieldByteSize.identifier);
         this.identifierString = ByteUtil.arrayAsStringWithDashes(this.identifier);
         this.ipAddress = Arrays.copyOf(ipAddress, FieldByteSize.ipAddress);
