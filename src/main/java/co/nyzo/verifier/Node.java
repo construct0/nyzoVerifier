@@ -9,6 +9,7 @@ public class Node implements MessageObject {
 
     private static final int communicationFailureInactiveThreshold = 6;
 
+    private String nickname; 
     private boolean identifierIsKnown;
     private byte[] identifier;                    // wallet public key (32 bytes)
     private String identifierString;
@@ -32,6 +33,7 @@ public class Node implements MessageObject {
             this.identifierIsKnown = true;
         }
 
+        this.setNickname(NicknameManager.get(identifier));
         this.identifier = Arrays.copyOf(identifier, FieldByteSize.identifier);
         this.identifierString = ByteUtil.arrayAsStringWithDashes(this.identifier);
         this.ipAddress = Arrays.copyOf(ipAddress, FieldByteSize.ipAddress);
@@ -41,6 +43,14 @@ public class Node implements MessageObject {
         this.queueTimestamp = System.currentTimeMillis();
         this.inactiveTimestamp = -1L;
         this.communicationFailureCount = 0;
+    }
+
+    public String getNickname(){
+        return nickname;
+    }
+
+    public void setNickname(String nickname){
+        this.nickname = nickname;
     }
 
     public boolean getIdentifierIsKnown(){
