@@ -33,6 +33,7 @@ public class Node implements MessageObject {
             this.identifierIsKnown = true;
         }
 
+        this.setNickname();
         this.identifier = Arrays.copyOf(identifier, FieldByteSize.identifier);
         this.identifierString = ByteUtil.arrayAsStringWithDashes(this.identifier);
         this.ipAddress = Arrays.copyOf(ipAddress, FieldByteSize.ipAddress);
@@ -48,8 +49,8 @@ public class Node implements MessageObject {
         return nickname;
     }
 
-    public void setNickname(String nickname){
-        this.nickname = nickname;
+    public void setNickname(){
+        this.nickname = NicknameManager.get(this.identifier);
     }
 
     public boolean getIdentifierIsKnown(){
