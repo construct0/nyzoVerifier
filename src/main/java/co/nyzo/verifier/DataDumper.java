@@ -174,13 +174,14 @@ public class DataDumper {
             for(ByteBuffer k : ipAddressNodeMap.keySet()){
                 // ip address node
                 Node v = ipAddressNodeMap.get(k);
-                v.setNickname(NicknameManager.get(i.getKey()));
+                
 
                 // set incycle boolean
                 v.setInCycle(i.getValue());
 
                 // node identifier
                 byte[] vi = v.getIdentifier();
+                v.setNickname();
 
                 // the kvp aligns with the identifier from the identifierMap
                 if(Arrays.equals(i.getKey(), vi)) {
