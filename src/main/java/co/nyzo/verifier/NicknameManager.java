@@ -43,7 +43,7 @@ public class NicknameManager {
 
         String nickname;
         if (identifier == null) {
-            nickname = "(null)";
+            nickname = "";
         } else {
             nickname = nicknameMap.get(ByteBuffer.wrap(identifier));
             if (nickname == null || nickname.isEmpty()) {
