@@ -1,4 +1,5 @@
 # Nyzo verifier
+# !!! This is a developer branch and things may break unexpectedly !!!
 
 This is the source for the Nyzo verifier, sentinel, client, documentation server, and a few other Nyzo tools.
 
