@@ -1,10 +1,12 @@
 package co.nyzo.verifier;
 
+import java.nio.ByteBuffer;
 
 public class DataDumpResultNodeInfo {
     public int majorVersion = -1;
     public int minorVersion = -1;
     public String version = "";
+    public boolean isInCycle = false;
 
     public long frozenEdgeHeight = -1;
     public Block frozenEdgeBlock = null;
@@ -21,6 +23,8 @@ public class DataDumpResultNodeInfo {
         majorVersion = Version.getVersion();
         minorVersion = Version.getSubVersion();
         version = "" + majorVersion + "." + minorVersion;
+        isInCycle = BlockManager.verifierInCurrentCycle(ByteBuffer.wrap(Verifier.getIdentifier()));
+
         frozenEdgeHeight = BlockManager.getFrozenEdgeHeight();
         frozenEdgeBlock = BlockManager.getFrozenEdge();
         genesisBlockStartTimestamp = BlockManager.getGenesisBlockStartTimestamp();
