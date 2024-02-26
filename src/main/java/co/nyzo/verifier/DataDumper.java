@@ -9,20 +9,35 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import co.nyzo.verifier.util.IpUtil;
 import co.nyzo.verifier.util.LogUtil;
+import co.nyzo.verifier.web.elements.P;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+// todo/remarks 
+// - parse the version strings from the existing messages and account for any subversions to be included, don't rely on version requests at this point since it's a 643 codebase
+// - decide whether the init timestamp should be provided or present in accumulator and speaks for the entire instance, none the less all data dumps procedes should be initiated on launch, just a sidenote 
+// - provide a simple version endpoint with version : {identifier: incycle boolean} map, if possible add the version string to the nodes dump as well
+// - node health/status insight from a 3rd party perspective was very useful 
+// - fix sd nodes, probably enough to import blocks, probably already 1 dropped (?)
+// - data accumulator for "foreign" class initiated calls to which some logic is applied, data dumper for datadumper initiated calls to which some logic is applied
+// -  perhaps some interplay with the consolidated blocks stored and a validator output pertaining to those files, incl shasum for each file for reference 
+// - the consolidated block storage should be accompanied by the last 1000 individual blocks up until the point of consolidation (ideally)
+// -  
+
 public class DataDumper {
+    public static final long dataDumperInitialisationTimestamp = System.currentTimeMillis();
     public static final File dataDumpDirectory = new File("/var/www/dumps");
 
     public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes.json");
+    public static final File meshVersionsFile = new File(DataDumper.dataDumpDirectory, "versions.json");
 
     private static Integer _c = 0;
 
@@ -30,10 +45,14 @@ public class DataDumper {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                dump();
+                try {
+                    dump();
+                } catch(Exception e) {
+                    LogUtil.println("[DataDumper]: unexpected exception, retrying..");
+                }
                 
                 try {
-					Thread.sleep(5000);
+					Thread.sleep(5000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
 				} catch (InterruptedException e) {
                     LogUtil.println("[DataDumper]: Thread.sleep InterruptedException");
                 }
@@ -54,14 +73,22 @@ public class DataDumper {
 
         Map<String, Map<String, Node>> meshParticipants = DataDumper.getMeshParticipants();
         
-        _persist(meshParticipantsFile, meshParticipants);
+        _persist(meshParticipantsFile, meshParticipants, "");
 
         LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
 
-    // identifier : [ip address : node]
+
+    // version string : {ip address : node}
+    // public static Map<String, Map<String, Node>> getMeshVersions() {
+
+    // }
+
+    // identifier : {ip address : node}
     public static Map<String, Map<String, Node>> getMeshParticipants() {
         Map<String, Map<String, Node>> result = new ConcurrentHashMap<>();
+
+        List<ByteBuffer> verifiersInCurrentCycleList = BlockManager.verifiersInCurrentCycleList();
 
         // identifier byte[], is in cycle : identifier string with dashes
         Map<KeyValuePair<byte[], Boolean>, String> identifierMap = new ConcurrentHashMap<>();
@@ -72,7 +99,7 @@ public class DataDumper {
         LogUtil.println("[DataDumper][getMeshParticipants]: " + activeInCycleVerifiers.size() + " active in cycle verifiers");
         
         activeInCycleVerifiers.forEach(i -> {
-            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), true);
+            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), verifiersInCurrentCycleList.contains(i));
 
             identifierMap.put(
                 k, 
@@ -94,7 +121,7 @@ public class DataDumper {
                 }
             }
 
-            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), true);
+            KeyValuePair<byte[], Boolean> k = new KeyValuePair<byte[], Boolean>(i.array(), verifiersInCurrentCycleList.contains(i));
 
             identifierMap.put(
                 k, 
@@ -252,9 +279,9 @@ public class DataDumper {
         return true;
     }
 
-    private static void _persist(File file, Object object){
+    private static void _persist(File file, Object object, String message){
         ObjectMapper objectMapper = new ObjectMapper();
-        DataDumpResult result = new DataDumpResult(object);
+        DataDumpResult result = new DataDumpResult(object, message, dataDumperInitialisationTimestamp);
 
         try {
             _persist(file, objectMapper.writeValueAsString(result));
