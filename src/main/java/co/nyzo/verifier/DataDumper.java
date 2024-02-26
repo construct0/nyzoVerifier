@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,9 +38,10 @@ public class DataDumper {
     public static final File dataDumpDirectory = new File("/var/www/dumps");
 
     public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes.json");
+    public static final File meshInCycleIdentifiers = new File(DataDumper.dataDumpDirectory, "incycleIdentifiers.json");
     public static final File meshVersionsFile = new File(DataDumper.dataDumpDirectory, "versions.json");
 
-    private static Integer _c = 0;
+    // private static Integer _c = 0;
 
     public DataDumper(){
         new Thread(new Runnable() {
@@ -72,12 +74,29 @@ public class DataDumper {
         }
 
         Map<String, Map<String, Node>> meshParticipants = DataDumper.getMeshParticipants();
-        
         _persist(meshParticipantsFile, meshParticipants, "");
+
+        // A QOL endpoint, the meshParticipants map has the inCycle boolean for each ip address / node, making it unclear if none can be found for an identifier
+        List<String> inCycleIdentifiers = DataDumper.getInCycleIdentifiers();
+        _persist(meshInCycleIdentifiers, inCycleIdentifiers, "");
 
         LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
 
+
+    public static List<String> getInCycleIdentifiers(){
+        List<String> result = new ArrayList<>();
+
+        List<ByteBuffer> verifiersInCurrentCycleList = BlockManager.verifiersInCurrentCycleList();
+
+        for(ByteBuffer i : verifiersInCurrentCycleList){
+            result.add(ByteUtil.arrayAsStringWithDashes(i.array()));
+        }
+
+        LogUtil.println("[DataDumper][getInCycleIdentifiers]: " + result.size() + " incycle identifiers");
+
+        return result;
+    }
 
     // version string : {ip address : node}
     // public static Map<String, Map<String, Node>> getMeshVersions() {
