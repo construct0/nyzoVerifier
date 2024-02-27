@@ -90,9 +90,11 @@ public class DataAccumulator {
                         if(messageSplit.length > 1){
                             String assumedVersionPart = messageSplit[1];
 
+                            LogUtil.println("proc: " + assumedVersionPart);
                             // No major validation just a simple length check
                             if(assumedVersionPart.length() < 10){
                                 if(!result.isFinal.get()){
+                                    LogUtil.println("add: " + node.getIdentifierString() + ", " + IpUtil.addressAsString(ipAddressBuffer.array()) + ", " + assumedVersionPart);
                                     result.addEntry(node.getIdentifierString(), IpUtil.addressAsString(ipAddressBuffer.array()), assumedVersionPart);
                                 }
                             }

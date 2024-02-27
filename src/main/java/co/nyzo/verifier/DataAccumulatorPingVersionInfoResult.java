@@ -14,10 +14,13 @@ public class DataAccumulatorPingVersionInfoResult {
     }
     
     public void addEntry(String identifier, String ip, String version){
-        if (result.get(identifier) != null) {
-            result.get(identifier).put(ip, version);
+        Map<String, String> existing = result.get(identifier);
+
+        if (existing != null) {
+            existing.put(ip, version);
         } else {
-            result.put(identifier, new ConcurrentHashMap<>()).put(ip, version);
+            Map<String, String> newValue = result.put(identifier, new ConcurrentHashMap<>());
+            newValue.put(ip, version);
         }
     }
 
