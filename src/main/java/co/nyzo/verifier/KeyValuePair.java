@@ -4,8 +4,8 @@ import java.util.Map;
 
 public class KeyValuePair<K, V> implements Map.Entry<K, V>
 {
-    private K key;
-    private V value;
+    public K key;
+    public V value;
 
     public KeyValuePair(K key, V value)
     {
