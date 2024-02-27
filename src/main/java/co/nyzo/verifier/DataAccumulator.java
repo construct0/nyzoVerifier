@@ -28,7 +28,7 @@ public class DataAccumulator {
                 try {
                     sendPings();
                 } catch(Exception e) {
-                    LogUtil.println("[DataAccumulator][thread0]: unexpected exception, retrying..");
+                    LogUtil.println("[DataAccumulator][thread0]: unexpected exception, retrying.. " + e.toString() + "\r\n" + e.getStackTrace());
                 }
                 
                 try {
