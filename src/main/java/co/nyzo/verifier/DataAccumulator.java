@@ -85,14 +85,10 @@ public class DataAccumulator {
                     if(message != null && message.getContent() instanceof PingResponse){
                         PingResponse response = (PingResponse)message.getContent();
 
-                        LogUtil.println("res: " + response.toString());
-                        LogUtil.println("origin res: " + message.getContent());
-
                         String[] messageSplit = response.toString().split("v=");
 
-                        // Split result indicates an appropriate and expected amount of results 
-                        if(messageSplit.length == 2){
-                            String assumedVersionPart = messageSplit[messageSplit.length - 1];
+                        if(messageSplit.length > 1){
+                            String assumedVersionPart = messageSplit[1];
 
                             // No major validation just a simple length check
                             if(assumedVersionPart.length() < 10){
