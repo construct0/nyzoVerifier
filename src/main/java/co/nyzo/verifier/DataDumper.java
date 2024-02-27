@@ -39,7 +39,8 @@ public class DataDumper {
 
     public static final File meshParticipantsFile = new File(DataDumper.dataDumpDirectory, "nodes.json");
     public static final File meshInCycleIdentifiers = new File(DataDumper.dataDumpDirectory, "incycleIdentifiers.json");
-    public static final File meshVersionsFile = new File(DataDumper.dataDumpDirectory, "versions.json");
+    public static final File meshRollingVersionsFile = new File(DataDumper.dataDumpDirectory, "rollingVersionResults.json");
+    public static final File meshFinalizedVersionsFile = new File(DataDumper.dataDumpDirectory, "finalizedVersionResult.json");
 
     private DataAccumulator _dataAccumulator = null;
 
@@ -85,7 +86,11 @@ public class DataDumper {
         _persist(meshInCycleIdentifiers, inCycleIdentifiers, "");
 
         KeyValuePair<DataAccumulatorPingVersionInfoResult, Set<DataAccumulatorPingVersionInfoResult>> availableVersionInfos = DataAccumulator.getAvailableVersionInfo();
-        _persist(meshVersionsFile, availableVersionInfos, "");
+        _persist(meshRollingVersionsFile, availableVersionInfos.getValue(), "");
+        
+        if(availableVersionInfos.getKey() != null){
+            _persist(meshFinalizedVersionsFile, availableVersionInfos.getKey(), "");
+        }
 
         LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
