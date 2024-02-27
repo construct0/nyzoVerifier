@@ -1,9 +1,11 @@
 package co.nyzo.verifier;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import co.nyzo.verifier.messages.PingResponse;
@@ -18,7 +20,7 @@ public class DataAccumulator {
     private static final int _maxAvailablePingVersionInfoResults = 3;
     private static final long _pingThreadSleep = 60000L;
 
-    public static Set<DataAccumulatorPingVersionInfoResult> PingVersionInfoResults = new ConcurrentSkipListSet<>();
+    public static Set<DataAccumulatorPingVersionInfoResult> PingVersionInfoResults = ConcurrentHashMap.newKeySet();
     public static DataAccumulatorPingVersionInfoResult LatestFinalizedPingVersionInfoResult = null;
 
     public DataAccumulator(){
