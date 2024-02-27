@@ -312,7 +312,7 @@ public class DataDumper {
         try {
             _persist(file, objectMapper.writeValueAsString(result));
         } catch (JsonProcessingException e){
-            LogUtil.println("[DataDumper][_persist]: failed to convert to json");
+            LogUtil.println("[DataDumper][_persist]: failed to convert to json " + e.toString() + "\r\n" + e.getStackTrace());
         }
     }
 
