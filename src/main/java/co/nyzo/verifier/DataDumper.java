@@ -41,9 +41,13 @@ public class DataDumper {
     public static final File meshInCycleIdentifiers = new File(DataDumper.dataDumpDirectory, "incycleIdentifiers.json");
     public static final File meshVersionsFile = new File(DataDumper.dataDumpDirectory, "versions.json");
 
+    private DataAccumulator _dataAccumulator = null;
+
     // private static Integer _c = 0;
 
     public DataDumper(){
+        _dataAccumulator = new DataAccumulator();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -79,6 +83,9 @@ public class DataDumper {
         // A QOL endpoint, the meshParticipants map has the inCycle boolean for each ip address / node, making it unclear if none can be found for an identifier
         List<String> inCycleIdentifiers = DataDumper.getInCycleIdentifiers();
         _persist(meshInCycleIdentifiers, inCycleIdentifiers, "");
+
+        KeyValuePair<DataAccumulatorPingVersionInfoResult, Set<DataAccumulatorPingVersionInfoResult>> availableVersionInfos = DataAccumulator.getAvailableVersionInfo();
+        _persist(meshVersionsFile, availableVersionInfos, "");
 
         LogUtil.println("[DataDumper][dump]: Completed dump...");
     }
