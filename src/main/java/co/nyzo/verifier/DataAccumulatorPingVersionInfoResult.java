@@ -19,7 +19,7 @@ public class DataAccumulatorPingVersionInfoResult {
     public void addEntry(String identifier, String ip, String version){
         Map<String, String> existing = result.get(identifier);
 
-        if (existing == null) { {
+        if (existing == null) {
             result.put(identifier, new ConcurrentHashMap<String, String>());
             existing = result.get(identifier);
         }
@@ -32,7 +32,7 @@ public class DataAccumulatorPingVersionInfoResult {
         try {
             LogUtil.println(identifier + ": " + objectMapper.writeValueAsString(existingMapForIdentifier));
         } catch (JsonProcessingException e){
-
+            LogUtil.println("[DataAccumulatorPingVersionInfoResult][addEntry]: Could not parse json existing map for identifier");
         }
     }
 
