@@ -26,14 +26,14 @@ public class DataAccumulatorPingVersionInfoResult {
 
         existing.put(ip, version);
 
-        Map<String, String> existingMapForIdentifier = result.get(identifier);
-        ObjectMapper objectMapper = new ObjectMapper();
+        // Map<String, String> existingMapForIdentifier = result.get(identifier);
+        // ObjectMapper objectMapper = new ObjectMapper();
 
-        try {
-            LogUtil.println(identifier + ": " + objectMapper.writeValueAsString(existingMapForIdentifier));
-        } catch (JsonProcessingException e){
-            LogUtil.println("[DataAccumulatorPingVersionInfoResult][addEntry]: Could not parse json existing map for identifier");
-        }
+        // try {
+        //     LogUtil.println(identifier + ": " + objectMapper.writeValueAsString(existingMapForIdentifier));
+        // } catch (JsonProcessingException e){
+        //     LogUtil.println("[DataAccumulatorPingVersionInfoResult][addEntry]: Could not parse json existing map for identifier");
+        // }
     }
 
     public void finalize(){
