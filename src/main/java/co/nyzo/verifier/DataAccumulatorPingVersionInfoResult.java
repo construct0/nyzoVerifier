@@ -4,8 +4,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import co.nyzo.verifier.util.LogUtil;
-
 public class DataAccumulatorPingVersionInfoResult {
     public final long created = System.currentTimeMillis(); 
     public AtomicBoolean isFinal = new AtomicBoolean(false); // if true the result will not change in content anymore
@@ -24,9 +22,6 @@ public class DataAccumulatorPingVersionInfoResult {
             Map<String, String> newValue = result.put(identifier, new ConcurrentHashMap<String, String>());
             newValue.put(ip, version);
         }
-
-        Map<String, String> out = result.get(identifier);
-        LogUtil.println("added: "+ out.toString());
     }
 
     public void finalize(){

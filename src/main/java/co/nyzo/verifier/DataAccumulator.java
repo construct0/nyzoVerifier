@@ -94,7 +94,10 @@ public class DataAccumulator {
                             // No major validation just a simple length check
                             if(assumedVersionPart.length() < 10){
                                 if(!result.isFinal.get()){
-                                    LogUtil.println("add: " + node.getIdentifierString() + ", " + IpUtil.addressAsString(ipAddressBuffer.array()) + ", " + assumedVersionPart);
+                                    if(assumedVersionPart.startsWith("644")){
+                                        LogUtil.println("add: " + node.getIdentifierString() + ", " + IpUtil.addressAsString(ipAddressBuffer.array()) + ", " + assumedVersionPart);
+                                    }
+                                    
                                     result.addEntry(node.getIdentifierString(), IpUtil.addressAsString(ipAddressBuffer.array()), assumedVersionPart);
                                 }
                             }
