@@ -92,6 +92,8 @@ public class DataAccumulator {
                             if(assumedVersionPart.length() < 10){
                                 if(!result.isFinal.get()){                             
                                     result.addEntry(node.getIdentifierString(), IpUtil.addressAsString(ipAddressBuffer.array()), assumedVersionPart);
+                                } else {
+                                    LogUtil.println("[DataAccumulator][sendPings]: " + "skipping entry addition due to state being finalized");
                                 }
                             }
                         }

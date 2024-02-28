@@ -19,12 +19,12 @@ public class DataAccumulatorPingVersionInfoResult {
     public void addEntry(String identifier, String ip, String version){
         Map<String, String> existing = result.get(identifier);
 
-        if (existing != null) {
-            existing.put(ip, version);
-        } else {
-            Map<String, String> newValue = result.put(identifier, new ConcurrentHashMap<String, String>());
-            newValue.put(ip, version);
+        if (existing == null) { {
+            result.put(identifier, new ConcurrentHashMap<String, String>());
+            existing = result.get(identifier);
         }
+
+        existing.put(ip, version);
 
         Map<String, String> existingMapForIdentifier = result.get(identifier);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -37,6 +37,7 @@ public class DataAccumulatorPingVersionInfoResult {
     }
 
     public void finalize(){
+        LogUtil.println("[DataAccumulatorPingVersionInfoResult][" + created + "]: finalizing..");
         this.isFinal.set(true);
     }
 }
