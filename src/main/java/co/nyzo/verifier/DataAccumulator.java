@@ -1,12 +1,10 @@
 package co.nyzo.verifier;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import co.nyzo.verifier.messages.PingResponse;
 import co.nyzo.verifier.util.IpUtil;
@@ -90,14 +88,9 @@ public class DataAccumulator {
                         if(messageSplit.length > 1){
                             String assumedVersionPart = messageSplit[1];
 
-                            LogUtil.println("proc: " + assumedVersionPart);
                             // No major validation just a simple length check
                             if(assumedVersionPart.length() < 10){
-                                if(!result.isFinal.get()){
-                                    if(assumedVersionPart.startsWith("644")){
-                                        LogUtil.println("add: " + node.getIdentifierString() + ", " + IpUtil.addressAsString(ipAddressBuffer.array()) + ", " + assumedVersionPart);
-                                    }
-                                    
+                                if(!result.isFinal.get()){                             
                                     result.addEntry(node.getIdentifierString(), IpUtil.addressAsString(ipAddressBuffer.array()), assumedVersionPart);
                                 }
                             }
