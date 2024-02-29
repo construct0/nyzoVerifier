@@ -10,8 +10,6 @@ import co.nyzo.verifier.messages.PingResponse;
 import co.nyzo.verifier.util.IpUtil;
 import co.nyzo.verifier.util.LogUtil;
 
-// untested 
-
 // not all data can be garnered from existing classes without introducing too much unrelated garbage in those classes, an "accumulator" was created, referencing it for accumulatory purposes may still be required 
 // it may also create/initiate background procs, anything beyond mere extraction (and optionally transforming) within datadumper class probably belongs here 
 public class DataAccumulator {
