@@ -32,7 +32,7 @@ public class SeedTransactionManager {
 
     private static final String transactionFileBaseUrlKey = "seed_transaction_base_url";
     private static final String transactionFileBaseUrl = PreferencesUtil.get(transactionFileBaseUrlKey,
-            "https://seed.nyzo.co/seedTransactions/");
+            "https://seed.nyzo.org/");
 
     private static final Map<Long, Transaction> transactionMap = new HashMap<>();
 
