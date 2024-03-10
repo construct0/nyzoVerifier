@@ -322,7 +322,7 @@ public class Verifier {
             try {
 
                 URL url = TestnetUtil.testnet ? new URL("https://testnet.nyzo.co/genesisBlock") :
-                        new URL(SeedTransactionManager.urlForFile("genesis"));
+                        new URL(SeedTransactionManager.urlForFile("genesis/i_000000000.nyzoblock"));
                 ReadableByteChannel channel = Channels.newChannel(url.openStream());
                 byte[] array = new byte[2048];
                 ByteBuffer buffer = ByteBuffer.wrap(array);
@@ -332,7 +332,9 @@ public class Verifier {
                 buffer.rewind();
                 genesisBlock = Block.fromByteBuffer(buffer);
 
-            } catch (Exception ignored) { }
+            } catch (Exception e) {
+                LogUtil.println("[Verifier][loadGenesisBlock]: " + e.toString() + ",\r\n" + e.getStackTrace().toString());
+            }
 
             // The verifier cannot start without a Genesis block. If there was a problem, sleep for two seconds and
             // try again.
