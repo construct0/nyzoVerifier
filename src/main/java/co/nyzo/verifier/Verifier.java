@@ -317,6 +317,12 @@ public class Verifier {
     public static void loadGenesisBlock() {
 
         Block genesisBlock = BlockManager.frozenBlockForHeight(0);
+
+        if(genesisBlock != null) {
+            LogUtil.println("[Verifier][loadGenesisBlock]: existing block: " + genesisBlock.toString());
+            genesisBlock = null; // todo remove
+        }
+
         while (genesisBlock == null && !UpdateUtil.shouldTerminate()) {
             System.out.println("genesis block is null");
             try {
