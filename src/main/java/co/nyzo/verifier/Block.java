@@ -76,6 +76,8 @@ public class Block implements MessageObject {
             this.verifierIdentifier = new byte[32];
             this.verifierSignature = new byte[64];
         }
+
+        LogUtil.println("[Block][constructor1]: " + this.toStringVerbose());
     }
 
     public Block(int blockchainVersion, long height, byte[] previousBlockHash, long startTimestamp,
@@ -90,6 +92,8 @@ public class Block implements MessageObject {
         this.balanceListHash = balanceListHash;
         this.verifierIdentifier = KeyUtil.identifierForSeed(verifierSeed);
         this.verifierSignature = SignatureUtil.signBytes(getBytes(false), verifierSeed);
+
+        LogUtil.println("[Block][constructor2]: " + this.toStringVerbose());
     }
 
     public Block(int blockchainVersion, long height, byte[] previousBlockHash, long startTimestamp,
@@ -105,6 +109,8 @@ public class Block implements MessageObject {
         this.balanceListHash = balanceListHash;
         this.verifierIdentifier = verifierIdentifier;
         this.verifierSignature = verifierSignature;
+
+        LogUtil.println("[Block][constructor3]: " + this.toStringVerbose());
     }
 
     public static int limitBlockchainVersion(int blockchainVersion) {
@@ -1028,5 +1034,18 @@ public class Block implements MessageObject {
         return "[Block: v=" + getBlockchainVersion() + ", height=" + getBlockHeight() + ", hash=" +
                 PrintUtil.compactPrintByteArray(getHash()) + ", id=" +
                 PrintUtil.compactPrintByteArray(getVerifierIdentifier()) + "]";
+    }
+
+    public String toStringVerbose(){
+        return this.toString().replace("]", ", ")
+               + "genesisBlockHash=" + ByteUtil.arrayAsStringWithDashes(Block.genesisBlockHash) + ", "
+               + "previousBlockHash=" + ByteUtil.arrayAsStringWithDashes(this.previousBlockHash) + ", "
+               + "startTimestamp=" + this.startTimestamp + ", "
+               + "verificationTimestamp=" + this.verificationTimestamp + ", "
+               + "transactionsSize=" + this.transactions.size() + ", "
+               + "balanceListHash=" + ByteUtil.arrayAsStringWithDashes(balanceListHash) + ", "
+               + "verifierSignature=" + ByteUtil.arrayAsStringNoDashes(verifierSignature) + ", "
+               + "]"
+               ;
     }
 }
