@@ -3,8 +3,14 @@ package co.nyzo.verifier;
 import co.nyzo.verifier.client.ConsoleColor;
 import co.nyzo.verifier.util.*;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,6 +117,36 @@ public class Block implements MessageObject {
         this.verifierSignature = verifierSignature;
 
         LogUtil.println("[Block][constructor3]: " + this.toStringVerbose());
+
+        // todo remove
+        if(PrintUtil.compactPrintByteArray(getHash()) == "bc4c...5364") {
+            File genesisOut = new File(Verifier.dataRootDirectory, "genesis_test");
+
+            File tempFile = new File(genesisOut.getAbsolutePath() + "_temp");
+            tempFile.delete();
+            // BufferedWriter writer = null;
+
+            try {
+                RandomAccessFile randomAccessFile = new RandomAccessFile(genesisOut, "rw");
+
+                randomAccessFile.write(this.getBytes());
+
+                randomAccessFile.close();
+
+                Path tempPath = Paths.get(tempFile.getAbsolutePath());
+                Path path = Paths.get(genesisOut.getAbsolutePath());
+
+                Files.move(tempPath, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e){
+                LogUtil.println("[Block][constructor3][tempPersistGenesis]: " + e.toString());
+
+                try {
+                    tempFile.delete();
+                } catch(Exception ignored) {
+
+                }
+            }
+        }
     }
 
     public static int limitBlockchainVersion(int blockchainVersion) {
