@@ -20,3 +20,4 @@ libs/
 tmp/
 .vscode/launch.json
 .vscode/settings.json
+*.class
