@@ -321,25 +321,42 @@ public class DataDumper {
         }
     }
 
+    /**
+     Exception in thread "Thread-1" java.lang.StackOverflowError
+        at java.security.AccessController.doPrivileged(Native Method)
+        at java.io.BufferedWriter.<init>(BufferedWriter.java:109)
+        at java.io.BufferedWriter.<init>(BufferedWriter.java:88)
+        at co.nyzo.verifier.DataDumper._persist(DataDumper.java:330)
+        at co.nyzo.verifier.DataDumper._persist(DataDumper.java:318)
+        at co.nyzo.verifier.DataDumper.dump(DataDumper.java:82)
+        at co.nyzo.verifier.DataDumper$1.run(DataDumper.java:56)
+        [..]
+    */
     private static void _persist(File file, String json){
         File tempFile = new File(file.getAbsolutePath() + "_temp");
         tempFile.delete();
-        BufferedWriter writer = null;
+        // BufferedWriter writer = null;
 
-        try {
-            writer = new BufferedWriter(new FileWriter(tempFile));
+        // try {
+        //     writer = new BufferedWriter(new FileWriter(tempFile));
+        //     writer.write(json);
+        // } catch (Exception e){
+        //     LogUtil.println("[DataDumper][_persist]: Failed to write json to temp file with path " + tempFile.getAbsolutePath());
+        // } 
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))) {
             writer.write(json);
         } catch (Exception e){
             LogUtil.println("[DataDumper][_persist]: Failed to write json to temp file with path " + tempFile.getAbsolutePath());
-        }
+        } 
 
-        try {
-            if(writer != null){
-                writer.close();
-            }
-        } catch (Exception e){
-            LogUtil.println("[DataDumper][_persist]: Failed to close file writer for temp file with path " + tempFile.getAbsolutePath());
-        }
+        // try {
+        //     if(writer != null){
+        //         writer.close();
+        //     }
+        // } catch (Exception e){
+        //     LogUtil.println("[DataDumper][_persist]: Failed to close file writer for temp file with path " + tempFile.getAbsolutePath());
+        // }
 
         try {
             Files.move(
