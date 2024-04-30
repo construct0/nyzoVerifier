@@ -43,13 +43,12 @@ public class DataDumper {
     public static final File meshFinalizedVersionsFile = new File(DataDumper.dataDumpDirectory, "finalizedVersionResult.json");
 
     private DataAccumulator _dataAccumulator = null;
-    private ObjectMapper _objectMapper = null;
+    private static ObjectMapper _objectMapper = new ObjectMapper();
 
     // private static Integer _c = 0;
 
     public DataDumper(){
         _dataAccumulator = new DataAccumulator();
-        _objectMapper = new ObjectMapper();
 
         new Thread(new Runnable() {
             @Override
