@@ -43,11 +43,13 @@ public class DataDumper {
     public static final File meshFinalizedVersionsFile = new File(DataDumper.dataDumpDirectory, "finalizedVersionResult.json");
 
     private DataAccumulator _dataAccumulator = null;
+    private ObjectMapper _objectMapper = null;
 
     // private static Integer _c = 0;
 
     public DataDumper(){
         _dataAccumulator = new DataAccumulator();
+        _objectMapper = new ObjectMapper();
 
         new Thread(new Runnable() {
             @Override
@@ -56,7 +58,9 @@ public class DataDumper {
                     dump();
                 } catch(Exception e) {
                     LogUtil.println("[DataDumper]: unexpected exception, retrying..");
-                }
+                } catch(StackOverflowError e){
+                    LogUtil.println("[DataDumper]: stack overflow error, retrying..");
+                } 
                 
                 try {
 					Thread.sleep(5000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
@@ -311,13 +315,14 @@ public class DataDumper {
     }
 
     private static void _persist(File file, Object object, String message){
-        ObjectMapper objectMapper = new ObjectMapper();
         DataDumpResult result = new DataDumpResult(object, message, dataDumperInitialisationTimestamp);
 
         try {
-            _persist(file, objectMapper.writeValueAsString(result));
+            _persist(file, _objectMapper.writeValueAsString(result));
         } catch (JsonProcessingException e){
             LogUtil.println("[DataDumper][_persist]: failed to convert to json " + e.toString() + "\r\n" + e.getStackTrace());
+        } finally {
+            result = null;
         }
     }
 
