@@ -53,21 +53,21 @@ public class DataDumper {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    dump();
-                } catch(Exception e) {
-                    LogUtil.println("[DataDumper]: unexpected exception, retrying..");
-                } catch(StackOverflowError e){
-                    LogUtil.println("[DataDumper]: stack overflow error, retrying..");
-                } 
-                
-                try {
-					Thread.sleep(5000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
-				} catch (InterruptedException e) {
-                    LogUtil.println("[DataDumper]: Thread.sleep InterruptedException");
+                while(true){
+                    try {
+                        dump();
+                    } catch(Exception e) {
+                        LogUtil.println("[DataDumper]: unexpected exception, retrying..");
+                    } catch(StackOverflowError e){
+                        LogUtil.println("[DataDumper]: stack overflow error, retrying..");
+                    } 
+                    
+                    try {
+                        Thread.sleep(5000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
+                    } catch (InterruptedException e) {
+                        LogUtil.println("[DataDumper]: Thread.sleep InterruptedException");
+                    }
                 }
-
-                run();
             }
         }).start();
     }
