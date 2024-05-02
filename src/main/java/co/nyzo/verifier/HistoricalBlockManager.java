@@ -170,7 +170,9 @@ public class HistoricalBlockManager {
                     ByteBuffer blockBuffer = ByteBuffer.wrap(blockBytes);
                     block = Block.fromByteBuffer(blockBuffer);
                 }
-            } catch (Exception ignored) { }
+            } catch (Exception e) { 
+                LogUtil.println("[HistoricalBlockManager][blockForHeight("+height+")]: " + e.getMessage() + "\r\n" + e.getStackTrace());
+            }
         }
 
         return block;
