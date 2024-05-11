@@ -3,10 +3,14 @@ package co.nyzo.verifier;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -56,6 +60,7 @@ public class DataDumper {
                 while(true){
                     try {
                         dump();
+                        _ensureDailyBackup();
                     } catch(Exception e) {
                         LogUtil.println("[DataDumper]: unexpected exception, retrying..");
                     } catch(StackOverflowError e){
@@ -372,5 +377,44 @@ public class DataDumper {
         } catch (Exception e){
             LogUtil.println("[DataDumper][_persist]: Failed to move temp file to final file path " + file.getAbsolutePath());
         }
+    }
+
+    // Writes the files in /var/www/dumps to a dedicated folder in dd.MM.yyyy format
+    // It overwrites the content in the dedicated folder until dd.MM.yyyy is no longer the current day, ensuring that the content within it is the last representation within that day
+    private static void _ensureDailyBackup(){
+        LocalDate currDate = LocalDate.now();
+        String formattedDate = currDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+
+        LogUtil.println("[DataDumper][_ensureDailyBackup]: Creating or updating backup for " + formattedDate + "...");
+
+        String configPath = dataDumpDirectory.getAbsolutePath();
+        configPath = configPath.endsWith("/") ? configPath : configPath + "/";
+
+        Path targetDir = Paths.get(configPath + formattedDate);
+
+        if (!Files.exists(targetDir)) {
+            try {
+                Files.createDirectories(targetDir);
+            } catch (Exception e) {
+                LogUtil.println("[DataDumper][_ensureDailyBackup]: Error creating directory: " + e.getMessage());
+            }
+        }
+
+        // Copy the files, not other directories in configPath
+        File sourceDir = new File(dataDumpDirectory.getAbsolutePath());
+
+        File[] files = sourceDir.listFiles();
+        for (File file : files) {
+            // temp files are ignored
+            if (file.isFile() && (!file.getName().endsWith("temp"))) {
+                try {
+                    Files.copy(file.toPath(), targetDir.resolve(file.getName()), StandardCopyOption.REPLACE_EXISTING);
+                } catch (Exception e) {
+                    LogUtil.println("[DataDumper][_ensureDailyBackup]: Error copying file: " + e.getMessage());
+                }
+            }
+        }
+
+        LogUtil.println("[DataDumper][_ensureDailyBackup]: Backup completed, " + files.length + " files have been copied to folder " + formattedDate + ", but may be overwritten until end of day");
     }
 }
