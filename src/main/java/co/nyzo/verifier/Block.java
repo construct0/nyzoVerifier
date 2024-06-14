@@ -144,6 +144,10 @@ public class Block implements MessageObject {
         return previousBlockHash;
     }
 
+    public String getPreviousBlockHashString(){
+        return ByteUtil.arrayAsStringWithDashes(previousBlockHash);
+    }
+
     public long getStartTimestamp() {
         return startTimestamp;
     }
@@ -160,8 +164,16 @@ public class Block implements MessageObject {
         return HashUtil.doubleSHA256(verifierSignature);
     }
 
+    public String getHashString(){
+        return ByteUtil.arrayAsStringWithDashes(this.getHash());
+    }
+
     public byte[] getBalanceListHash() {
         return balanceListHash;
+    }
+
+    public String getBalanceListHashString(){
+        return ByteUtil.arrayAsStringWithDashes(balanceListHash);
     }
 
     public Block getPreviousBlock() {
@@ -185,8 +197,16 @@ public class Block implements MessageObject {
         return verifierIdentifier;
     }
 
+    public String getVerifierIdentifierString(){
+        return ByteUtil.arrayAsStringWithDashes(verifierIdentifier);
+    }
+
     public byte[] getVerifierSignature() {
         return verifierSignature;
+    }
+
+    public String getVerifierSignatureString(){
+        return ByteUtil.arrayAsStringNoDashes(verifierSignature);
     }
 
     public ContinuityState getContinuityState() {
