@@ -209,6 +209,9 @@ public class Verifier {
 
             ChainInitializationManager.initializeFrozenEdge(trustedEntryPoints);
 
+            // Start the web listener.
+            WebListener.start();
+
             // v In order to process efficiently, we need to be well-connected to the cycle. If there are slow-downs that have prevented connection to this point, they should be addressed before entering the main verifier loop.
             NodeManager.sendNodeJoinRequests(-1);
             NodeManager.updateActiveVerifiersAndRemoveOldNodes();
@@ -244,7 +247,7 @@ public class Verifier {
             }
 
             // Start the web listener.
-            WebListener.start();
+            // WebListener.start();
 
             initializationTime = System.currentTimeMillis() - startTimestamp;
             System.out.println("ready to start thread for main verifier loop, initialization time=" +
