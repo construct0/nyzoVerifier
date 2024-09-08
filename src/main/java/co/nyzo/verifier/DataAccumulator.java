@@ -23,19 +23,19 @@ public class DataAccumulator {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-                    sendPings();
-                } catch(Exception e) {
-                    LogUtil.println("[DataAccumulator][thread0]: unexpected exception, retrying.. " + e.toString() + "\r\n" + e.getStackTrace());
-                }
-                
-                try {
-					Thread.sleep(_pingThreadSleep); 
-				} catch (InterruptedException e) {
-                    LogUtil.println("[DataAccumulator][thread0]: Thread.sleep InterruptedException");
-                }
-
-                run();
+		while(true){
+	                try {
+	                    sendPings();
+	                } catch(Exception e) {
+	                    LogUtil.println("[DataAccumulator][thread0]: unexpected exception, retrying.. " + e.toString() + "\r\n" + e.getStackTrace());
+	                }
+	                
+	                try {
+						Thread.sleep(_pingThreadSleep); 
+					} catch (InterruptedException e) {
+	                    LogUtil.println("[DataAccumulator][thread0]: Thread.sleep InterruptedException");
+	                }
+		}
             }
         }).start();
     }
