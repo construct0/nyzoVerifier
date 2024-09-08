@@ -68,7 +68,7 @@ public class DataDumper {
                     } 
                     
                     try {
-                        Thread.sleep(5000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
+                        Thread.sleep(1000); // this doesn't need to be further adjusted due to dump() running sequential; ergo self adjusting 
                     } catch (InterruptedException e) {
                         LogUtil.println("[DataDumper]: Thread.sleep InterruptedException");
                     }
