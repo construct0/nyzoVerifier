@@ -24,6 +24,14 @@ public class ApprovedCycleTransaction implements MessageObject {
         this.amount = amount;
     }
 
+    public byte[] getInitiatorIdentifier(){
+        return initiatorIdentifier;
+    }
+
+    public byte[] getReceiverIdentifier(){
+        return receiverIdentifier;
+    }
+
     public long getApprovalHeight() {
         return approvalHeight;
     }

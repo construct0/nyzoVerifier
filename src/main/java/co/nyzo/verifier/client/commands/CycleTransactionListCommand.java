@@ -22,17 +22,17 @@ public class CycleTransactionListCommand implements Command {
 
     @Override
     public String getDescription() {
-        return "list cycle transactions";
+        return "list pending cycle transactions";
     }
 
     @Override
     public String[] getArgumentNames() {
-        return new String[0];
+        return new String[] { "block height (optional)" };
     }
 
     @Override
     public String[] getArgumentIdentifiers() {
-        return new String[0];
+        return new String[] { "blockHeight" };
     }
 
     @Override
@@ -61,21 +61,58 @@ public class CycleTransactionListCommand implements Command {
         // Make the lists for the notices and errors. Make the result table.
         List<String> notices = new ArrayList<>();
         List<String> errors = new ArrayList<>();
-        CommandTable table = new CommandTable(new CommandTableHeader("initiator ID", "initiatorId", true),
-                new CommandTableHeader("initiator ID string", "initiatorIdNyzoString", true),
-                new CommandTableHeader("receiver ID", "receiverId", true),
-                new CommandTableHeader("receiver ID string", "receiverIdNyzoString", true),
-                new CommandTableHeader("amount", "amount"),
-                new CommandTableHeader("height", "height"),
-                new CommandTableHeader("initiator data", "initiatorData", true),
-                new CommandTableHeader("# votes", "numberOfVotes"),
-                new CommandTableHeader("# yes votes", "numberOfYesVotes"),
-                new CommandTableHeader("signature", "signature", true),
-                new CommandTableHeader("signature string", "signatureNyzoString", true));
+
+        long blockHeight = -1L;
+        Block frozenEdge = BlockManager.getFrozenEdge();
+        long frozenEdgeHeight = frozenEdge.getBlockHeight();
 
         try {
-            // Get the balance list.
-            BalanceList balanceList = BalanceListManager.getFrozenEdgeList();
+            blockHeight = Long.parseLong(argumentValues.get(0));
+        } catch (Exception ignored) {}
+
+        long minimumTimestamp = -1L;
+        long maximumTimestamp = -1L;
+
+        if(blockHeight >= 0){
+            notices.add("Using block height of " + blockHeight + " for search");
+        } else {
+            notices.add("Using block height of " + frozenEdgeHeight + " for search");
+            blockHeight = frozenEdgeHeight;
+        }
+
+        CommandTable table = new CommandTable(
+            new CommandTableHeader("initiator identifier", "initiatorIdentifier", true),
+            new CommandTableHeader("initiator identifier nyzo string", "initiatorIdentifierNyzoString", true),
+            new CommandTableHeader("receiver identifier", "receiverIdentifier", true),
+            new CommandTableHeader("receiver identifier nyzo string", "receiverIdentifierNyzoString", true),
+            new CommandTableHeader("amount", "amount"),
+            new CommandTableHeader("height", "height"),
+            new CommandTableHeader("initiator data", "initiatorData", true),
+            new CommandTableHeader("# votes", "numberOfVotes"),
+            new CommandTableHeader("# yes votes", "numberOfYesVotes"),
+            new CommandTableHeader("signature", "signature", true),
+            new CommandTableHeader("signature nyzo string", "signatureNyzoString", true)
+        );
+
+        try {
+            minimumTimestamp = BlockManager.startTimestampForHeight(blockHeight);
+            maximumTimestamp = BlockManager.startTimestampForHeight(blockHeight + 1L) - 1L;
+
+            if(minimumTimestamp <= 0){
+                throw new Exception("Could not determine start timestamp for block height " + blockHeight);
+            }
+
+            BalanceList balanceList = null;
+
+            if(frozenEdgeHeight == blockHeight){
+                balanceList = BalanceListManager.getFrozenEdgeList();
+            } else {
+                balanceList = BlockManager.loadBalanceListFromFileForHeight(blockHeight);
+
+                if(balanceList != null){
+                    notices.add("The pending cycle transaction states in this result are a historical representation, refer to the transactionSearch endpoint to fetch, among others, approved cycle transaction executions; refer to the balanceList endpoint to fetch approved cycle transaction stubs");
+                }
+            }
 
             if (balanceList == null) {
                 errors.add("balance list is null");
@@ -101,6 +138,7 @@ public class CycleTransactionListCommand implements Command {
                     // Add the amount, height, initiator data, number of cycle signatures, and number of "yes" votes.
                     row.add(PrintUtil.printAmount(transaction.getAmount()));
                     row.add(BlockManager.heightForTimestamp(transaction.getTimestamp()));
+
                     row.add(WebUtil.sanitizedSenderDataForDisplay(transaction.getSenderData()));
                     row.add(transaction.getCycleSignatureTransactions().size());
                     row.add(numberOfYesVotes(transaction.getCycleSignatureTransactions().values()));

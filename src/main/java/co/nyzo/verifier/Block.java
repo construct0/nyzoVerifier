@@ -234,13 +234,21 @@ public class Block implements MessageObject {
     public CycleInformation getCycleInformation() {
 
         if (cycleInformation == null) {
-            calculateCycleInformation();
+            calculateCycleInformation(false);
         }
 
         return cycleInformation;
     }
 
-    private void calculateCycleInformation() {
+    public CycleInformation getCycleInformation(boolean eager){
+        if(cycleInformation == null){
+            calculateCycleInformation(eager);
+        }
+
+        return cycleInformation;
+    }
+
+    private void calculateCycleInformation(boolean eager) {
 
         // This is the new method. It finds the maximum cycle length of any block in the previous three cycles.
         Block blockToCheck = this;
@@ -303,6 +311,16 @@ public class Block implements MessageObject {
             }
 
             blockToCheck = blockToCheck.getPreviousBlock();
+
+            if(!reachedGenesisBlock && blockToCheck == null && eager){
+                blockToCheck = this;
+
+                try {
+                    blockToCheck = HistoricalBlockManager.blockForHeight(blockToCheck.height - 1);
+                } catch (Exception ignored) { 
+                    blockToCheck = null;
+                }
+            }
         }
 
         // If we found four full cycles or if we reached the beginning of the chain, we can build the
@@ -762,6 +780,12 @@ public class Block implements MessageObject {
                 pendingCycleTransactions.remove(identifier);
             }
         }
+
+        /* */
+
+
+
+        /* */
 
         // Add all cycle-signature transactions from this block to their parent transactions.
         Map<ByteBuffer, Transaction> signatureToTransactionMap = new HashMap<>();

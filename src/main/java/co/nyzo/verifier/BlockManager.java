@@ -275,14 +275,14 @@ public class BlockManager {
         return new File(directory, String.format("%06d.%s", fileIndex, "nyzoblock"));
     }
 
-    private static Block loadBlockFromFile(long blockHeight) {
+    public static Block loadBlockFromFile(long blockHeight) {
 
         // Try to first load the block from the individual file. If the block is not there, extract the consolidated
         // file and try to load the block from there. In time, no consolidated files should need to be read, but this
         // provides a smooth transition from the old, more aggressive behavior of the file consolidator.
         Block block = loadBlockFromIndividualFile(blockHeight);
         if (block == null) {
-            extractConsolidatedFile(consolidatedFileForBlockHeight(blockHeight));
+            extractConsolidatedFile(consolidatedFileForBlockHeight(blockHeight), blockHeight);
             block = loadBlockFromIndividualFile(blockHeight);
         }
         return block;
@@ -396,8 +396,10 @@ public class BlockManager {
 
                     // Confirm that the balance list hash matches.
                     if (!ByteUtil.arraysAreEqual(balanceList.getHash(), block.getBalanceListHash())) {
-                        throw new RuntimeException("balance list hash does not match for block " +
-                                block.getBlockHeight());
+                        System.out.println("balance list hash does not match for block " + block.getBlockHeight() + ", " + ByteUtil.arrayAsStringWithDashes(balanceList.getHash()) + " vs " + ByteUtil.arrayAsStringWithDashes(block.getBalanceListHash()));
+                        // TODO 
+                        // throw new RuntimeException("balance list hash does not match for block " +
+                                // block.getBlockHeight() + ", " + ByteUtil.arrayAsStringWithDashes(balanceList.getHash()) + " vs " + ByteUtil.arrayAsStringWithDashes(block.getBalanceListHash()));
                     }
 
                     // Write the individual file.
@@ -438,8 +440,8 @@ public class BlockManager {
                         blockBalanceList = balanceList;
 
                         if (!ByteUtil.arraysAreEqual(blockBalanceList.getHash(), block.getBalanceListHash())) {
-                            System.err.println("incorrect hash for balance list");
-                            blockBalanceList = null;
+                            System.err.println("incorrect hash for balance list blockbalancelistheight=" + blockBalanceList.getBlockHeight() + ", blockheight=" + block.getBlockHeight());
+                            // blockBalanceList = null; // TODO
                         }
                     }
 

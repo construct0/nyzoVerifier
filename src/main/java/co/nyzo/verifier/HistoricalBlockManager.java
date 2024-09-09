@@ -15,6 +15,9 @@ public class HistoricalBlockManager {
     public static final String startManagerKey = "start_historical_block_manager";
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
+    private static final String offsetBuildThrottlingKey = "offset_build_throttling";
+    private static final boolean offsetBuildThrottling = PreferencesUtil.getBoolean(offsetBuildThrottlingKey, true);
+
     public static void start() {
 
         // Start the manager if the preference indicates. Resource usage is not trivial, so the default is false.
@@ -26,13 +29,15 @@ public class HistoricalBlockManager {
 
                     while (!UpdateUtil.shouldTerminate()) {
                         try {
-                            // Sleep for 5 minutes (300 seconds) in 3-second increments. This is a process that provides
-                            // access to 1000-block sections of the Nyzo blockchain history, so each unit of work for
-                            // this process covers 7000 seconds of the blockchain. Sleeping for five minutes between
-                            // iterations keeps resource usage at a reasonable rate while leaving plenty of room for
-                            // eventually building and indexing a full history on this node.
-                            for (int i = 0; i < 100; i++) {
-                                ThreadUtil.sleep(3000);
+                            if(offsetBuildThrottling){
+                                // Sleep for 5 minutes (300 seconds) in 3-second increments. This is a process that provides
+                                // access to 1000-block sections of the Nyzo blockchain history, so each unit of work for
+                                // this process covers 7000 seconds of the blockchain. Sleeping for five minutes between
+                                // iterations keeps resource usage at a reasonable rate while leaving plenty of room for
+                                // eventually building and indexing a full history on this node.
+                                for (int i = 0; i < 100; i++) {
+                                    ThreadUtil.sleep(3000);
+                                }
                             }
 
                             // Build an offset file.
@@ -128,7 +133,7 @@ public class HistoricalBlockManager {
         return offsets;
     }
 
-    public static Block blockForHeight(long height) {
+    public static Block blockForHeight(long height) throws Exception {
 
         // First, look to individual files that may not have been consolidated yet.
         File file = BlockManager.individualFileForBlockHeight(height);
@@ -170,7 +175,12 @@ public class HistoricalBlockManager {
                     ByteBuffer blockBuffer = ByteBuffer.wrap(blockBytes);
                     block = Block.fromByteBuffer(blockBuffer);
                 }
-            } catch (Exception ignored) { }
+            } catch (Exception e) { 
+                // LogUtil.println("[HistoricalBlockManager][blockForHeight("+height+")]: " + e.getMessage() + "\r\n" + e.getStackTrace());
+                throw new Exception(e);
+            }
+        } else {
+            throw new Exception("Block != null or offset file does not exist");
         }
 
         return block;

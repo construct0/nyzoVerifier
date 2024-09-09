@@ -8,6 +8,7 @@ public class CommandManager {
 
     private static final Command[] commands = {
             new BalanceDisplayCommand(),
+            new BalanceListCommand(),
             new ClientHealthCommand(),
             new TransactionSendCommand(),
             new PrivateNyzoStringCommand(),
@@ -19,6 +20,7 @@ public class CommandManager {
             new CycleTransactionSignCommand(),
             new TransactionIndexedSearchCommand(),
             new TransactionSearchCommand(),
+            new BlockSearchCommand(),
             new CoinsInCirculationCommand(),
             new FrozenEdgeCommand(),
             new TransactionForwardCommand(),

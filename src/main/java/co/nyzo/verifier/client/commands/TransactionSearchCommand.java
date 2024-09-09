@@ -123,10 +123,21 @@ public class TransactionSearchCommand implements Command {
                 new CommandTableHeader("transaction (Nyzo string)", "transactionNyzoString", true));
         if (minimumTimestamp > 0) {
             long height = BlockManager.heightForTimestamp(minimumTimestamp);
-            Block block = BlockManager.frozenBlockForHeight(height);
-            if (block == null) {
-                block = HistoricalBlockManager.blockForHeight(height);
+            Block block = null;
+
+            try {
+                block = BlockManager.frozenBlockForHeight(height);
+
+                if(block == null){
+                    block = BlockManager.loadBlockFromFile(blockHeight);
+                }
+                if (block == null) {
+                    block = HistoricalBlockManager.blockForHeight(height);
+                }
+            } catch (Exception e){
+                errors.add("Failed to find block");
             }
+            
             long frozenEdgeHeight = BlockManager.getFrozenEdgeHeight();
             long retentionEdgeHeight = BlockManager.getRetentionEdgeHeight();
             List<Transaction> transactions = new ArrayList<>();

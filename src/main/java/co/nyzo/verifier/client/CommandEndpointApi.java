@@ -1,6 +1,7 @@
 package co.nyzo.verifier.client;
 
 import co.nyzo.verifier.client.commands.Command;
+import co.nyzo.verifier.util.LogUtil;
 import co.nyzo.verifier.web.*;
 
 import java.nio.charset.StandardCharsets;
@@ -37,6 +38,7 @@ public class CommandEndpointApi implements EndpointResponseProvider {
                 // Build the response.
                 response = result.toEndpointResponse();
             } catch (Exception ignored) {
+                LogUtil.println(ignored.getMessage() + ignored.getStackTrace());
                 String message = "An internal error occurred when running the command";
                 response = new EndpointResponse(message.getBytes(StandardCharsets.UTF_8));
             }

@@ -18,7 +18,7 @@ public class BalanceDisplayCommand implements Command {
 
     @Override
     public String getShortCommand() {
-        return "BL";
+        return "BD";
     }
 
     @Override
