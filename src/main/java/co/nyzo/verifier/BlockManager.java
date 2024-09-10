@@ -282,7 +282,7 @@ public class BlockManager {
         // provides a smooth transition from the old, more aggressive behavior of the file consolidator.
         Block block = loadBlockFromIndividualFile(blockHeight);
         if (block == null) {
-            extractConsolidatedFile(consolidatedFileForBlockHeight(blockHeight), blockHeight);
+            extractConsolidatedFile(consolidatedFileForBlockHeight(blockHeight));
             block = loadBlockFromIndividualFile(blockHeight);
         }
         return block;

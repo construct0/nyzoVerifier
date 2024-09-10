@@ -13,15 +13,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HistoricalBlockManager {
 
     public static final String startManagerKey = "start_historical_block_manager";
+    public static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, false);
+
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
-    private static final String offsetBuildThrottlingKey = "offset_build_throttling";
-    private static final boolean offsetBuildThrottling = PreferencesUtil.getBoolean(offsetBuildThrottlingKey, true);
+    public static final String offsetBuildThrottlingKey = "offset_build_throttling";
+    public static final boolean offsetBuildThrottling = PreferencesUtil.getBoolean(offsetBuildThrottlingKey, true);
+
+    // TODO
+    private static long lastOffsetHeight = Long.MAX_VALUE;
 
     public static void start() {
 
         // Start the manager if the preference indicates. Resource usage is not trivial, so the default is false.
-        if (PreferencesUtil.getBoolean(startManagerKey, false) && !alive.getAndSet(true)) {
+        if (startManager && !alive.getAndSet(true)) {
+            if(offsetBuildThrottling){
+                System.out.println("[INFO][HistoricalBlockManager]: throttling is enabled, one offset file is built every 5 minutes for one consolidated block file containing 1000 blocks");
+            } else {
+                System.out.println("[INFO][HistoricalBlockManager]: throttling is disabled, a large amount of system resources are dedicated to building offset files quickly");
+            }
 
             new Thread(new Runnable() {
                 @Override
@@ -44,8 +54,7 @@ public class HistoricalBlockManager {
                             buildOffsetFile();
 
                         } catch (Exception e) {
-                            LogUtil.println("HistoricalBlockManager: exception in outer thread" +
-                                    PrintUtil.printException(e));
+                            LogUtil.println("HistoricalBlockManager: exception in outer thread" + PrintUtil.printException(e));
                         }
                     }
 
@@ -57,6 +66,11 @@ public class HistoricalBlockManager {
         }
     }
 
+    // This allows for the HistoricalCycleDigestManager to determine whether it can generate new cycle digests beyond a certain block height
+    public static long getLastOffsetHeight(){
+        return lastOffsetHeight;
+    }
+
     private static void buildOffsetFile() {
 
         // This is a brute-force process for finding which offset file to build. Just before a consolidated file is
@@ -64,8 +78,7 @@ public class HistoricalBlockManager {
         // files do not exist. This process checks all consolidated files backward from the frozen edge. When a
         // consolidated file without an offset file is found, the offset file is built.
         long offsetFileHeight = -1L;
-        for (long height = BlockManager.getFrozenEdgeHeight(); height >= 0 && offsetFileHeight < 0;
-             height -= BlockManager.blocksPerFile) {
+        for (long height = BlockManager.getFrozenEdgeHeight(); height >= 0 && offsetFileHeight < 0; height -= BlockManager.blocksPerFile) {
             if (BlockManager.consolidatedFileForBlockHeight(height).exists() && !offsetFileForHeight(height).exists()) {
                 offsetFileHeight = height;
             }
@@ -79,12 +92,16 @@ public class HistoricalBlockManager {
             // Write the offsets to the file.
             byte[] offsetBytes = new byte[offsets.length * 4];
             ByteBuffer offsetBuffer = ByteBuffer.wrap(offsetBytes);
+
             for (int offset : offsets) {
                 offsetBuffer.putInt(offset);
             }
+
             try {
                 Files.write(Paths.get(offsetFileForHeight(offsetFileHeight).getAbsolutePath()), offsetBytes);
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) { 
+
+            }
         }
     }
 
@@ -145,42 +162,46 @@ public class HistoricalBlockManager {
             }
         }
 
-        // Next, look to indexed consolidated files.
-        File offsetFile = offsetFileForHeight(height);
-        if (block == null && offsetFile.exists()) {
-            try {
-                // Read the offsets from the file into a byte array.
-                RandomAccessFile offsetFileReader = new RandomAccessFile(offsetFile, "r");
-                offsetFileReader.seek((height % BlockManager.blocksPerFile) * 8);
-                byte[] offsetBytes = new byte[8];
-                offsetFileReader.read(offsetBytes);
-                offsetFileReader.close();
+        if(block == null){
+            // Next, look to indexed consolidated files.
+            File offsetFile = offsetFileForHeight(height);
+            String exceptionMessage = "Individual block file & consolidated block offset file do not exist for block height " + height;
 
-                // Get the offsets as integers.
-                ByteBuffer offsetBuffer = ByteBuffer.wrap(offsetBytes);
-                int startOffset = offsetBuffer.getInt();
-                int endOffset = offsetBuffer.getInt();
-
-                // If the block is in the file, read it.
-                if (startOffset >= 0 && endOffset >= 0) {
-                    // Read the block bytes from the block file.
-                    File consolidatedFile = BlockManager.consolidatedFileForBlockHeight(height);
-                    RandomAccessFile blockFileReader = new RandomAccessFile(consolidatedFile, "r");
-                    blockFileReader.seek(startOffset);
-                    byte[] blockBytes = new byte[endOffset - startOffset];
-                    blockFileReader.read(blockBytes);
-                    blockFileReader.close();
-
-                    // Make the block from the bytes.
-                    ByteBuffer blockBuffer = ByteBuffer.wrap(blockBytes);
-                    block = Block.fromByteBuffer(blockBuffer);
+            if(offsetFile.exists()){
+                try {
+                    // Read the offsets from the file into a byte array.
+                    RandomAccessFile offsetFileReader = new RandomAccessFile(offsetFile, "r");
+                    offsetFileReader.seek((height % BlockManager.blocksPerFile) * 8);
+                    byte[] offsetBytes = new byte[8];
+                    offsetFileReader.read(offsetBytes);
+                    offsetFileReader.close();
+    
+                    // Get the offsets as integers.
+                    ByteBuffer offsetBuffer = ByteBuffer.wrap(offsetBytes);
+                    int startOffset = offsetBuffer.getInt();
+                    int endOffset = offsetBuffer.getInt();
+    
+                    // If the block is in the file, read it.
+                    if (startOffset >= 0 && endOffset >= 0) {
+                        // Read the block bytes from the block file.
+                        File consolidatedFile = BlockManager.consolidatedFileForBlockHeight(height);
+                        RandomAccessFile blockFileReader = new RandomAccessFile(consolidatedFile, "r");
+                        blockFileReader.seek(startOffset);
+                        byte[] blockBytes = new byte[endOffset - startOffset];
+                        blockFileReader.read(blockBytes);
+                        blockFileReader.close();
+    
+                        // Make the block from the bytes.
+                        ByteBuffer blockBuffer = ByteBuffer.wrap(blockBytes);
+                        block = Block.fromByteBuffer(blockBuffer);
+                    }
+                } catch (Exception e) { 
+                    System.out.println(e.getMessage() + "\r\n" + e.getStackTrace());
+                    throw new Exception(exceptionMessage);
                 }
-            } catch (Exception e) { 
-                // LogUtil.println("[HistoricalBlockManager][blockForHeight("+height+")]: " + e.getMessage() + "\r\n" + e.getStackTrace());
-                throw new Exception(e);
+            } else {
+                throw new Exception(exceptionMessage);                
             }
-        } else {
-            throw new Exception("Block != null or offset file does not exist");
         }
 
         return block;

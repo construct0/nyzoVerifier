@@ -354,7 +354,8 @@ public class CycleDigest implements MessageObject {
 
             result = new CycleDigest(blockHeight, identifiers);
         } catch (Exception e) {
-            LogUtil.println("exception deserializing CycleDigest: " + PrintUtil.printException(e));
+            System.out.println("exception deserializing CycleDigest: " + PrintUtil.printException(e));
+            result = null;
         }
 
         return result;
