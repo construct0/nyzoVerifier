@@ -21,7 +21,7 @@ public class HistoricalCycleDigestManager {
 
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
-    // cd /var/lib/nyzo/production/blocks/individual && ls -l -a | grep *.cycledigest
+    // cd /var/lib/nyzo/production/blocks/[individual] && ls -l -a | grep *.cycledigest
     public static void start(){
 
         // Start the manager if the preference flag indicates so. Starts from block 0 onwards until the frozen edge height, keeps tracking frozen edge height and creating cycle digests.
@@ -98,6 +98,7 @@ public class HistoricalCycleDigestManager {
         return last;
     }
 
+    // todo switch to consolidated block list/filtering
     protected static Long[] getStoredCycleDigestHeights() throws IOException {
         return Files.list(BlockManager.individualBlockDirectory.toPath())
                     .filter(file -> file.getFileName().endsWith("cycledigest"))

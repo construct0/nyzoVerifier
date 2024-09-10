@@ -396,10 +396,10 @@ public class BlockManager {
 
                     // Confirm that the balance list hash matches.
                     if (!ByteUtil.arraysAreEqual(balanceList.getHash(), block.getBalanceListHash())) {
-                        System.out.println("balance list hash does not match for block " + block.getBlockHeight() + ", " + ByteUtil.arrayAsStringWithDashes(balanceList.getHash()) + " vs " + ByteUtil.arrayAsStringWithDashes(block.getBalanceListHash()));
-                        // TODO 
-                        // throw new RuntimeException("balance list hash does not match for block " +
-                                // block.getBlockHeight() + ", " + ByteUtil.arrayAsStringWithDashes(balanceList.getHash()) + " vs " + ByteUtil.arrayAsStringWithDashes(block.getBalanceListHash()));
+                        String msg = "balance list hash does not match for block " + block.getBlockHeight() + ", " + ByteUtil.arrayAsStringWithDashes(balanceList.getHash()) + " vs " + ByteUtil.arrayAsStringWithDashes(block.getBalanceListHash());
+
+                        System.out.println(msg);
+                        throw new RuntimeException(msg);
                     }
 
                     // Write the individual file.
@@ -441,7 +441,7 @@ public class BlockManager {
 
                         if (!ByteUtil.arraysAreEqual(blockBalanceList.getHash(), block.getBalanceListHash())) {
                             System.err.println("incorrect hash for balance list blockbalancelistheight=" + blockBalanceList.getBlockHeight() + ", blockheight=" + block.getBlockHeight());
-                            // blockBalanceList = null; // TODO
+                            blockBalanceList = null;
                         }
                     }
 
