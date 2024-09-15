@@ -310,17 +310,25 @@ public class Block implements MessageObject {
                 }
             }
 
-            blockToCheck = blockToCheck.getPreviousBlock();
+            // Attempt to get the block from memory 
+            Block previousBlock = blockToCheck.getPreviousBlock(); 
 
-            if(!reachedGenesisBlock && blockToCheck == null && eager){
-                blockToCheck = this;
-
+            if(!reachedGenesisBlock && previousBlock == null && eager){
+                // Attempt to get the block without writing individual files to disk in the process, this requires offset files to be present
                 try {
-                    blockToCheck = HistoricalBlockManager.blockForHeight(blockToCheck.height - 1);
+                    previousBlock = HistoricalBlockManager.blockForHeight(blockToCheck.height - 1);
                 } catch (Exception ignored) { 
-                    blockToCheck = null;
+                    previousBlock = null;
+                }
+
+                // Attempt to get the block by extracting the consolidated file for that height, this writes all individual blocks associated with that height to disk in the process
+                // If the block file consolidator consolidates individual block files these will be consolidated again in the future
+                if(previousBlock == null){
+                    previousBlock = BlockManager.loadBlockFromFile(blockToCheck.height - 1);
                 }
             }
+
+            blockToCheck = previousBlock;
         }
 
         // If we found four full cycles or if we reached the beginning of the chain, we can build the

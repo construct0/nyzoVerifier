@@ -103,13 +103,22 @@ public class BlockSearchCommand implements Command {
             Block block = null;
 
             try {
+                // Attempt to get the frozen block from memory
                 block = BlockManager.frozenBlockForHeight(blockHeight);
+
+                // Attempt to get the frozen block without writing individual files to disk in the process, this requires offset files to be present
+                try {
+                    if(block == null){
+                        block = HistoricalBlockManager.blockForHeight(blockHeight);
+                    }
+                } catch (Exception ignored){
+                    block = null;
+                }
                 
+                // Attempt to get the frozen block by extracting the consolidated file for that height, this writes all individual blocks associated with that height to disk in the process
+                // If the block file consolidator consolidates individual block files these will be consolidated again in the future
                 if(block == null){
                     block = BlockManager.loadBlockFromFile(blockHeight);
-                }
-                if(block == null){
-                    block = HistoricalBlockManager.blockForHeight(blockHeight);
                 }
             } catch (Exception e){
                 errors.add("Failed to find block");

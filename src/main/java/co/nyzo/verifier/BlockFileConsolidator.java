@@ -13,11 +13,13 @@ public class BlockFileConsolidator {
     // - consolidate: create consolidated files and delete individual files (normal operation)
     // - delete: delete individual files only (do not create consolidated files)
     // - disable: do not run (do not create consolidated files, do not delete individual files)
-    private static final String runOptionKey = "block_file_consolidator";
-    private static final String runOptionValueConsolidate = "consolidate";
-    private static final String runOptionValueDeleteOnly = "delete";
-    private static final String runOptionValueDisable = "disable";
+    public static final String runOptionKey = "block_file_consolidator";
+    public static final String runOptionValueConsolidate = "consolidate";
+    public static final String runOptionValueDeleteOnly = "delete";
+    public static final String runOptionValueDisable = "disable";
     private static String runOption = PreferencesUtil.get(runOptionKey).toLowerCase();
+
+    public static final int runEverySeconds = 300;
 
     public static void main(String[] args) {
         // If a command-line argument is specified, it overrides the run option value from the preferences file. This
@@ -53,9 +55,9 @@ public class BlockFileConsolidator {
                     while (!UpdateUtil.shouldTerminate()) {
 
                         // Sleep for 5 minutes (300 seconds) in 3-second intervals.
-                        for (int i = 0; i < 100 && !UpdateUtil.shouldTerminate(); i++) {
+                        for (int i = 0; i < (runEverySeconds / 3) && !UpdateUtil.shouldTerminate(); i++) {
                             try {
-                                Thread.sleep(3000L);
+                                Thread.sleep(runEverySeconds * 10);
                             } catch (Exception ignored) { }
                         }
 
