@@ -17,87 +17,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import co.nyzo.verifier.util.PreferencesUtil;
 import co.nyzo.verifier.util.UpdateUtil;
 
- // This handles the case from genesis on-forward, the 4-cycles availability case has second priority
- // TODO: decide whether BlockFileConsolidator(.delete[individual]Files) is responsible for cleaning up the cycle digests as well; would probably be better to do it here and only clean up after building a consolidated cycle digest list was successful for the newly available consolidated block
-
-// todo construct calls icm flags
+// todo
 public class HistoricalCycleDigestManager {
     public static final String startManagerKey = "start_historical_cycle_digest_manager";
     private static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, false);
-
-    // public static final String cycleDigestBuildThrottlingKey = "cycle_digest_build_throttling";
-    // private static final boolean cycleDigestBuildThrottling = PreferencesUtil.getBoolean(cycleDigestBuildThrottlingKey, true);
-
-    // private static final boolean historicalBlockManagerEnabled = HistoricalBlockManager.startManager;
-    // private static final boolean historicalBlockManagerThrottling = HistoricalBlockManager.offsetBuildThrottling;
-
-    // private static String blockFileConsolidatorRunOption = PreferencesUtil.get(BlockFileConsolidator.runOptionKey).toLowerCase();
 
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
     private static CycleDigest lastCycleDigest = null;
 
-    // cd /var/lib/nyzo/production/blocks/[individual] && ls -l -a | grep *.cycledigest
     public static void start(){
-
         if(startManager && !alive.getAndSet(true)){
-            // if(!historicalBlockManagerEnabled){
-            //     System.out.println("[WARN][HistoricalCycleDigestManager]: the historical block manager is not enabled, ensure the necessary consolidated block offset files are available on this system");
-            // }
-
-            // if(blockFileConsolidatorRunOption != BlockFileConsolidator.runOptionValueConsolidate){
-
-            // }
-
             new Thread(new Runnable() {
                 @Override
                 public void run(){
 
                     while(!UpdateUtil.shouldTerminate()){
                         try {
-                            
-
-
-
-                            // Long[] sortedConsolidatedStoredFileHeights = getStoredConsolidatedCycleDigestHeights(consolidationThreshold);
-                            // long latestCoherentConsolidatedFileHeight = getLatestCoherentFileHeight(sortedConsolidatedStoredFileHeights);
-
-                            // Long[] sortedIndividualStoredFileHeights = getStoredIndividualCycleDigestHeights();
-                            // long latestCoherentIndividualFileHeight = getLatestCoherentFileHeight(sortedIndividualStoredFileHeights);
-
-                            // create cons. cycle digests for any cons. files possible, indiscriminate
-                            
-                            // One or more new consolidated cycle digest files can be created 
-                            // if(consolidationThreshold >= ((latestCoherentConsolidatedFileHeight * BlockManager.blocksPerFile) + BlockManager.blocksPerFile)){
-                                // determine max consolidated file height
-                                // create up until and including that height
-                                // check whether individual cycle digests for which a consolidated one has been created should be deleted icm BlockFileConsolidator preference 
-                            // }
-
-                            // File latestStoredConsolidatedCycleDigestFile = getStoredConsolidatedCycleDigestFile(latestCoherentConsolidatedFileHeight);
-
-
-
-
-                        } catch (IOException ioException){
-                            System.out.println();
+                            Thread.sleep(10_000L);
+                            createConsolidateCycleDigests();
                         } catch (Exception e){
 
                         } finally {
-                            // if(cycleDigestBuildThrottling){
 
-                            // }
                         }
-
-
-                        
-
                     }
                 }
             });
-
         }
-        
     }
 
     private static void createConsolidateCycleDigests(){
@@ -179,11 +126,9 @@ public class HistoricalCycleDigestManager {
             );
             lastCycleDigest = cycleDigestsToWrite.get(cycleDigestsToWrite.size() - 1);
         }
+
+        // todo cont.
     }
-
-    // private static void createConsolidatedCycleDigestForConsolidatedBlockFile(File file){
-
-    // }
 
     private static List<CycleDigest> loadCycleDigestsInFile(File file){
         List<CycleDigest> cycleDigests = new ArrayList<>();
@@ -330,42 +275,4 @@ public class HistoricalCycleDigestManager {
 
         return consolidatedCycleDigestHeights;
     }
-
-    // protected static Long[] getStoredIndividualCycleDigestHeights() throws IOException {
-    //     return Files.list(BlockManager.individualBlockDirectory.toPath())
-    //                 .filter(file -> file.getFileName().endsWith("cycledigest"))
-    //                 .map(Path::getFileName)
-    //                 .map(Path::toString)
-    //                 .map(fn -> fn.replace("i_", "").replace(".cycleDigest", ""))
-    //                 .map(heightString -> {
-    //                     try {
-    //                         return Long.parseLong(heightString);
-    //                     } catch (Exception ignored) { 
-    //                         return -1L;
-    //                     }
-    //                 })
-    //                 .sorted()
-    //                 .toArray(Long[]::new)
-    //                 ;
-    // }
-
-    // private static void createIndividualCycleDigests(){
-
-    // }
-
-    // private static void pruneLingeringIndividualCycleDigests(){
-
-    // }
-
-    // protected static File[] getStoredIndividualCycleDigestFiles(long aboveFileHeight, long belowFileHeight) throws IOException {
-    //     if(aboveFileHeight < 0) {
-
-    //     } else {
-
-    //     }
-    // }
-
-    // private static CycleDigest getCycleDigestFromFileForHeight(long fileHeight) {
-    //     return CycleDigest.fromFileForHeight(fileHeight);
-    // }
 }
