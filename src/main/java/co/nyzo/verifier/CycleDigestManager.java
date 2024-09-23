@@ -44,7 +44,8 @@ public class CycleDigestManager {
                         } catch (Exception e){
 
                         } finally {
-                            createCycleDigests();        
+                            createCycleDigests();    
+                            CycleDigestFileConsolidator.consolidateCycleDigests();    
                         }
                     }
                 }
@@ -70,8 +71,8 @@ public class CycleDigestManager {
             Block frozenEdge = BlockManager.getFrozenEdge();
             long startAtBlockHeight = lastCycleDigest != null ? lastCycleDigest.getBlockHeight() + 1 : 0;
     
-            // The block height beyond which trying to create cycle digests is not supported (frozen edge height)
-            long stopBeforeBlockHeight = frozenEdge.getBlockHeight() + 1;
+            // The block height beyond which trying to create cycle digests is not intended or supported in this call
+            long stopBeforeBlockHeight = Math.min(startAtBlockHeight + 10_000L, frozenEdge.getBlockHeight() + 1);
     
             // List<CycleDigest> cycleDigestsToWrite = new ArrayList<>();
             CycleDigest rollingCycleDigest = null;
