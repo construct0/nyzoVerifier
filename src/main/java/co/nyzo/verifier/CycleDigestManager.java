@@ -301,7 +301,7 @@ public class CycleDigestManager {
         return successful;
     }
 
-    private static boolean writeCycleDigestsToConsolidatedFile(List<CycleDigest> cycleDigests, File file){
+    public static boolean writeCycleDigestsToConsolidatedFile(List<CycleDigest> cycleDigests, File file){
         // Determine the temporary file and ensure the location is available.
         File temporaryFile = new File(file.getAbsolutePath() + "_temp");
         temporaryFile.delete();
@@ -346,11 +346,11 @@ public class CycleDigestManager {
         return successful;
     }
 
-    private static CycleDigest loadCycleDigestFromIndividualFile(File file) {
+    public static CycleDigest loadCycleDigestFromIndividualFile(File file) {
         return CycleDigest.fromFile(file);
     }
 
-    private static List<CycleDigest> loadCycleDigestsFromConsolidatedFile(File file){
+    public static List<CycleDigest> loadCycleDigestsFromConsolidatedFile(File file){
         long fileHeight = Long.parseLong(
             file.toPath()
                 .getFileName()
@@ -430,7 +430,7 @@ public class CycleDigestManager {
         return CycleDigest.fileForHeight(blockHeight);
     }
 
-    private static File getConsolidatedCycleDigestFile(long fileHeight) {
+    public static File getConsolidatedCycleDigestFile(long fileHeight) {
         File consolidatedBlockFile = BlockManager.consolidatedFileForBlockHeight(fileHeight * BlockManager.blocksPerFile);
         return new File(consolidatedBlockFile.getAbsolutePath().replace("nyzoblock", "cycledigest"));
     }
@@ -486,7 +486,7 @@ public class CycleDigestManager {
     }
 
     private static File[] getStoredIndividualCycleDigestFiles(){
-        return BlockManager.individualBlockDirectory.listFiles(f -> f.getAbsolutePath().endsWith("cycledigest"));
+        return CycleDigestManager.individualCycleDigestDirectory.listFiles(f -> f.getAbsolutePath().endsWith("cycledigest"));
     }
 
     private static CycleDigest findHighestConsolidatedCycleDigestEntry(){
