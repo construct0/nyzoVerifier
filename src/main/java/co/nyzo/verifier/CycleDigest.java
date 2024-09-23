@@ -362,10 +362,13 @@ public class CycleDigest implements MessageObject {
     }
 
     public static CycleDigest fromFileForHeight(long height) {
+        return CycleDigest.fromFile(CycleDigest.fileForHeight(height));
+    }
 
+    public static CycleDigest fromFile(File file){
         CycleDigest digest = null;
         try {
-            byte[] fileBytes = Files.readAllBytes(Paths.get(fileForHeight(height).getAbsolutePath()));
+            byte[] fileBytes = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
             digest = CycleDigest.fromByteBuffer(ByteBuffer.wrap(fileBytes));
         } catch (Exception ignored) { }
 
