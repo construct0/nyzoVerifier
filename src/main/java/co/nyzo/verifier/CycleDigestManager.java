@@ -27,8 +27,6 @@ public class CycleDigestManager {
 
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
-    // private static CycleDigest lastCycleDigest = null;
-
     public static void start(){
         if(startManager && !alive.getAndSet(true)){
             new Thread(new Runnable() {
@@ -58,21 +56,12 @@ public class CycleDigestManager {
     private static void createCycleDigests(){
         try {
             CycleDigest lastCycleDigest = CycleDigestManager.getLastCycleDigestEntry();
-
-            // Akin to block files, cycle digest files behind the retention edge are consolidated. If the retention edge is not available, step back 5 cycles.
-            // This will prevent accumulation of excessive individual files due to discontinuities.
-            // long consolidateBeforeBlockHeight;
-            // if (BlockManager.getRetentionEdgeHeight() >= 0) {
-            //     consolidateBeforeBlockHeight = BlockManager.getRetentionEdgeHeight();
-            // } else {
-            //     consolidateBeforeBlockHeight = BlockManager.getFrozenEdgeHeight() - BlockManager.currentCycleLength() * 5;
-            // }
     
             Block frozenEdge = BlockManager.getFrozenEdge();
             long startAtBlockHeight = lastCycleDigest != null ? lastCycleDigest.getBlockHeight() + 1 : 0;
     
             // The block height beyond which trying to create cycle digests is not intended or supported in this call
-            long stopBeforeBlockHeight = Math.min(startAtBlockHeight + 10_000L, frozenEdge.getBlockHeight() + 1);
+            long stopBeforeBlockHeight = Math.min(startAtBlockHeight + 10_001L, frozenEdge.getBlockHeight() + 1);
     
             // List<CycleDigest> cycleDigestsToWrite = new ArrayList<>();
             CycleDigest rollingCycleDigest = null;
@@ -138,132 +127,6 @@ public class CycleDigestManager {
         } catch (Exception e){
 
         }
-       
-
-        // get highest indiv cycle digest block height
-        // get highest cycle digest block height stored within a consolidated file
-
-        // if any != -1 OR -1
-        //      get individual blocks AMOUNT beyond max(indivmax, consmax)
-        //      get blocks AMOUNT in consolidated file(s) beyond max(indivmax, consmax)
-
-        //      per N individual blocks: get individual blocks & AMOUNT-=N
-        //      per N blocks : get blocks & AMOUNT-=N
-
-        //      if any blocks
-        //          get file->cycledigest for highest cycle digest block height, set as previousCycleDigest
-        //          foreach indiv block, use previousCycleDigest to create cycleDigest, add to list, set previousCycleDigest
-        //          save indiv cycle digest
-        //
-        //          get consfile->cycledigest for highest cycle digest block height, set as previousCycleDigest; if consfile not full, store as write target
-        //          foreach cons block, " " " " " " " " " " " " " " "
-        //              accum until write target limit reached, save; set new write target (next cons file)
-
-        
-    }
-
-    // private static void consolidateCycleDigests(){
-        // long frozenEdgeHeight = BlockManager.getFrozenEdgeHeight();
-
-        // Uses the largest consolidation threshold as depicted in BlockFileConsolidator.consolidateFiles() whereby an additional
-        // minimum interval of 1000 blocks, increased by the maximum amount of blocks which can be produced within the period 
-        // since the BlockFileConsolidator last ran, increased by an arbitrary amount of 10 blocks; is enforced
-        // long consolidationThreshold = 
-        //     frozenEdgeHeight 
-        //     - (
-        //         Math.max(BlockManager.blocksPerFile, (BlockManager.currentCycleLength() * 5)) 
-        //         + (BlockFileConsolidator.runEverySeconds / (Block.minimumVerificationInterval / 1000)) 
-        //         + 10
-        //     );
-
-        // Block files behind the retention edge are consolidated. If the retention edge is not available, step back 5 cycles.
-        // This will prevent accumulation of excessive individual files due to discontinuities.
-        // long consolidationThreshold;
-        // if (BlockManager.getRetentionEdgeHeight() >= 0) {
-        //     consolidationThreshold = BlockManager.getRetentionEdgeHeight();
-        // } else {
-        //     consolidationThreshold = BlockManager.getFrozenEdgeHeight() - BlockManager.currentCycleLength() * 5;
-        // }
-        // long currentFileIndex = consolidationThreshold / BlockManager.blocksPerFile;
-
-        // Long[] storedFileHeights = HistoricalCycleDigestManager.getStoredConsolidatedCycleDigestFileHeights(consolidationThreshold);
-        // long maxFileHeight = storedFileHeights.length > 0 ? storedFileHeights[storedFileHeights.length - 1] : -1L;
-        // File lastFile = HistoricalCycleDigestManager.getConsolidatedCycleDigestFile(maxFileHeight);
-        
-        // List<CycleDigest> lastConsolidatedCycleDigests = new ArrayList<>();
-        // CycleDigest lastCycleDigest = null;
-
-        // if(maxFileHeight != -1L){
-        //     lastConsolidatedCycleDigests = HistoricalCycleDigestManager.loadCycleDigestsFromConsolidatedFile(
-        //         lastFile,
-        //         maxFileHeight * HistoricalCycleDigestManager.cycleDigestsPerFile,
-        //         (maxFileHeight * HistoricalCycleDigestManager.cycleDigestsPerFile) + (HistoricalCycleDigestManager.cycleDigestsPerFile - 1)
-        //     );
-
-        //     if(lastConsolidatedCycleDigests.size() > 0){
-        //         lastCycleDigest = lastConsolidatedCycleDigests.get(lastConsolidatedCycleDigests.size() - 1);
-        //     }
-        // }
-
-        
-
-
-
-
-
-        // long startFromFileHeight = (lastCycleDigest == null) ? 0 : lastCycleDigest.getBlockHeight() + 1;
-
-        // List<Block> relevantBlocks = new ArrayList<>();
-
-        // try {
-        //     relevantBlocks = HistoricalCycleDigestManager.loadBlocksFromConsolidatedFile(BlockManager.consolidatedFileForBlockHeight(startFromFileHeight));
-        // } catch (Exception e){
-        //     System.out.println();
-        // }
-
-        // List<CycleDigest> cycleDigestsToWrite = new ArrayList<>();
-        // CycleDigest rollingCycleDigest = null;
-
-        // for(int i=0; i<relevantBlocks.size(); i++){
-        //     Block block = relevantBlocks.get(i);
-        //     CycleDigest cycleDigest = null;
-
-        //     if(lastCycleDigest == null){
-        //         if(block.getBlockHeight() == 0){
-        //             cycleDigest = CycleDigest.digestForNextBlock(null, block.getVerifierIdentifier(), 0);
-        //         }
-        //     } else {
-        //         if(rollingCycleDigest == null){
-        //             if((lastCycleDigest.getBlockHeight() + 1) == block.getBlockHeight()){
-        //                 cycleDigest = CycleDigest.digestForNextBlock(lastCycleDigest, block.getVerifierIdentifier(), -1L); 
-        //             } 
-        //         } else {
-        //             if((rollingCycleDigest.getBlockHeight() + 1) == block.getBlockHeight()){
-        //                 cycleDigest = CycleDigest.digestForNextBlock(rollingCycleDigest, block.getVerifierIdentifier(), -1L);
-        //             }
-        //         }
-        //     }
-
-        //     if(cycleDigest != null){
-        //         cycleDigestsToWrite.add(cycleDigest);
-        //         rollingCycleDigest = cycleDigest;
-        //     } else {
-        //         break;
-        //     }
-        // }
-
-        
-        // if(cycleDigestsToWrite.size() == HistoricalCycleDigestManager.cycleDigestsPerFile){
-        //     HistoricalCycleDigestManager.writeCycleDigestsToConsolidatedFile(
-        //         cycleDigestsToWrite,
-        //         HistoricalCycleDigestManager.getConsolidatedCycleDigestFile(startFromFileHeight)                  
-        //     );
-        //     lastCycleDigest = cycleDigestsToWrite.get(cycleDigestsToWrite.size() - 1);
-        // }
-
-        // todo cont.
-    // }
-
     
 
     private static boolean writeCycleDigestToIndividualFile(CycleDigest cycleDigest){
@@ -396,33 +259,6 @@ public class CycleDigestManager {
 
         return cycleDigests;
     }
-
-    // private static List<Block> loadBlocksFromConsolidatedFile(File file) throws Exception {
-    //     long fileHeight = Long.parseLong(
-    //         file.toPath()
-    //             .getFileName()
-    //             .toString()
-    //             .replace(".nyzoblock", "")
-    //     );
-    //     long minimumHeight = fileHeight * BlockManager.blocksPerFile;
-    //     long maximumHeight = minimumHeight + BlockManager.blocksPerFile - 1;
-
-    //     List<Block> blocks = BlockManager.loadBlocksInFile(file, minimumHeight, maximumHeight);
-
-    //     Collections.sort(blocks, new Comparator<Block>(){
-    //         @Override
-    //         public int compare(Block b0, Block b1){
-    //             return Long.compare(b0.getBlockHeight(), b1.getBlockHeight());
-    //         }
-    //     });
-
-    //     return blocks;
-    //     // if(blocks.size() == BlockManager.blocksPerFile){
-    //     //     return blocks;
-    //     // }
-
-    //     // throw new Exception("Expected " + BlockManager.blocksPerFile + " blocks but got " + blocks.size() + " for file " + file.getAbsolutePath());
-    // }
 
 
     private static File getIndividualCycleDigestFile(long blockHeight){
