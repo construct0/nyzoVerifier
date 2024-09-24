@@ -8,9 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import co.nyzo.verifier.util.LogUtil;
 import co.nyzo.verifier.util.PreferencesUtil;
-import co.nyzo.verifier.util.UpdateUtil;
 
 // todo should the cycle digest in the future be subject to blockchain version-related changes, consider/check whether attempting to read >1 cycledigest from 1 indiv cycle digest file makes sense 
 
@@ -24,11 +22,7 @@ public class CycleDigestFileConsolidator {
     public static final String runOptionValueConsolidate = "consolidate";
     public static final String runOptionValueDeleteOnly = "delete";
     public static final String runOptionValueDisable = "disable";
-    private static String runOption = PreferencesUtil.get(runOptionKey).toLowerCase();
-
-    // public static final int runEverySeconds = 300;
-
-    //  todo fileIndex -> fileHeight to be in concordance w term in manager
+    private static String runOption = PreferencesUtil.get(runOptionKey).toLowerCase(); // default is assigned in static constructor below
 
     static {
         // Ensure the value is explicitly set to one of the enumerated values. The default is "delete" for the verifier
@@ -55,6 +49,11 @@ public class CycleDigestFileConsolidator {
             // Get all cycle digest files in the individual directory
             File[] individualFiles = CycleDigestManager.individualCycleDigestDirectory.listFiles(f -> f.getAbsolutePath().endsWith("cycledigest"));
 
+            if(individualFiles.length == 0){
+                return;
+            }
+
+            // To align with the consolidation threshold in BlockFileConsolidator;
             // Files behind the retention edge are consolidated. If the retention edge is not available, step back 5 cycles.
             // This will prevent accumulation of excessive individual files due to discontinuities.
             long consolidationThreshold;
@@ -66,25 +65,24 @@ public class CycleDigestFileConsolidator {
             
             long currentFileHeight = consolidationThreshold / CycleDigestManager.cycleDigestsPerFile;
 
+            // todo diff blockfileconsolidator height >0 (it serves a diff utility there; not necessary here)
             // Build a map of all files that need to be consolidated
             // file height : individual cycle digest files within the scope of said file height
             Map<Long, List<File>> fileMap = new HashMap<>();
             if(individualFiles != null){
                 for(File file : individualFiles){
                     long blockHeight = CycleDigestFileConsolidator.blockHeightForFile(file);
-                    if(blockHeight > 0){
-                        long fileHeight = blockHeight / CycleDigestManager.cycleDigestsPerFile;
+                    long fileHeight = blockHeight / CycleDigestManager.cycleDigestsPerFile;
 
-                        if(fileHeight < currentFileHeight){
-                            List<File> filesForFileHeight = fileMap.get(fileHeight);
+                    if(fileHeight < currentFileHeight){
+                        List<File> filesForFileHeight = fileMap.get(fileHeight);
 
-                            if(filesForFileHeight == null){
-                                filesForFileHeight = new ArrayList<>();
-                                fileMap.put(fileHeight, filesForFileHeight);
-                            }
-
-                            filesForFileHeight.add(file);
+                        if(filesForFileHeight == null){
+                            filesForFileHeight = new ArrayList<>();
+                            fileMap.put(fileHeight, filesForFileHeight);
                         }
+
+                        filesForFileHeight.add(file);
                     }
                 }
             }
@@ -95,7 +93,7 @@ public class CycleDigestFileConsolidator {
 
                 // If the delete-only option is set, skip consolidation
                 if (!runOption.equals(runOptionValueDeleteOnly)) {
-                    performDelete = consolidateFiles(fileHeight, fileMap.get(fileHeight));
+                    performDelete = CycleDigestFileConsolidator.consolidateFiles(fileHeight, fileMap.get(fileHeight));
                 } else {
                     performDelete = true;
                 }
@@ -106,18 +104,13 @@ public class CycleDigestFileConsolidator {
                         file.delete();
                     }
                 }
-                
-                // todo
-                System.out.println();
             }
-
-            // , , - , ,
-
         } catch (Exception e){
-
+            // todo
         }
     }
 
+    // Consolidates the given individual files into a consolidated file, whereby the consolidated file to write to is determined by the provided file height
     private static boolean consolidateFiles(long fileHeight, List<File> individualFiles) {
         boolean successful;
 
@@ -155,6 +148,7 @@ public class CycleDigestFileConsolidator {
                 }
             }
 
+            // Check for incremental gaps
             Long previousBlockHeight = -1L;
             for(int i=0; i<cycleDigests.size(); i++){
                 if(previousBlockHeight == -1L){
@@ -179,6 +173,7 @@ public class CycleDigestFileConsolidator {
         return successful = true;
     }
 
+    // Returns the block height associated with the given cycle digest file 
     private static long blockHeightForFile(File file) {
 
         long height = -1;

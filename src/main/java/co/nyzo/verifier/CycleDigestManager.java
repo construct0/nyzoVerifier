@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import co.nyzo.verifier.util.PreferencesUtil;
 import co.nyzo.verifier.util.UpdateUtil;
 
-// todo
+// todo catch blocks & determine how block file consolidator behaves/should behave when disabled, no offset or individual block files exist and the consolidated block files are unpacked to get the block necessary for creating that cycle digest
+// todo add remaining [].start() statements beyond client, perhaps require opt-in preference 
 public class CycleDigestManager {
     public static final String startManagerKey = "start_cycle_digest_manager";
     private static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, true);
@@ -27,27 +28,32 @@ public class CycleDigestManager {
 
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
+    // The maximum amount of individual cycle digests which are created before a consolidation attempt is made
+    private static final long maxCreateBatchSize = 5000L;
+
+    // Delay between consolidate & create runs
+    private static final long delayForSeconds = 30L;
     public static void start(){
         if(startManager && !alive.getAndSet(true)){
             new Thread(new Runnable() {
                 @Override
                 public void run(){
-                    CycleDigestManager.createCycleDigests();
-
                     while(!UpdateUtil.shouldTerminate()){
                         try {
-                            for(int i=0; i<100 && !UpdateUtil.shouldTerminate(); i++){
-                                Thread.sleep(2000L);
-                            }
-                        } catch (Exception e){
-
-                        } finally {
-                            CycleDigestManager.createCycleDigests();    
                             CycleDigestFileConsolidator.consolidateCycleDigests();    
+                            CycleDigestManager.createCycleDigests();    
+
+                            for(int i=0; i<(delayForSeconds / 2) && !UpdateUtil.shouldTerminate(); i++){
+                                Thread.sleep(delayForSeconds * 10);
+                            }
+                        } catch (InterruptedException e){
+
+                        } catch (Exception e) {
+
                         }
                     }
                 }
-            });
+            }).start();
         }
     }
 
@@ -61,7 +67,7 @@ public class CycleDigestManager {
             long startAtBlockHeight = lastCycleDigest != null ? lastCycleDigest.getBlockHeight() + 1 : 0;
     
             // The block height beyond which trying to create cycle digests is not intended or supported in this call
-            long stopBeforeBlockHeight = Math.min(startAtBlockHeight + 10_001L, frozenEdge.getBlockHeight() + 1);
+            long stopBeforeBlockHeight = Math.min(startAtBlockHeight + CycleDigestManager.maxCreateBatchSize, frozenEdge.getBlockHeight() + 1);
     
             // List<CycleDigest> cycleDigestsToWrite = new ArrayList<>();
             CycleDigest rollingCycleDigest = null;
@@ -127,8 +133,9 @@ public class CycleDigestManager {
         } catch (Exception e){
 
         }
-    
+    }
 
+    // Writes 1 (one) cycle digest to the appropriate individual file
     private static boolean writeCycleDigestToIndividualFile(CycleDigest cycleDigest){
         File file = CycleDigestManager.getIndividualCycleDigestFile(cycleDigest.getBlockHeight());
 
@@ -163,6 +170,7 @@ public class CycleDigestManager {
         return successful;
     }
 
+    // Writes cycle digests to a consolidated file
     public static boolean writeCycleDigestsToConsolidatedFile(List<CycleDigest> cycleDigests, File file){
         // Determine the temporary file and ensure the location is available.
         File temporaryFile = new File(file.getAbsolutePath() + "_temp");
@@ -212,6 +220,8 @@ public class CycleDigestManager {
         return CycleDigest.fromFile(file);
     }
 
+    // Loads all cycle digests from a consolidated file
+    // Wraps the function below
     public static List<CycleDigest> loadCycleDigestsFromConsolidatedFile(File file){
         long fileHeight = Long.parseLong(
             file.toPath()
@@ -226,6 +236,8 @@ public class CycleDigestManager {
         return CycleDigestManager.loadCycleDigestsFromConsolidatedFile(file, minimumHeight, maximumHeight);
     }
     
+    // Loads a specific set of cycle digests from a consolidated file
+    // Akin to how blocks residing in a consolidated block file are loaded in
     private static List<CycleDigest> loadCycleDigestsFromConsolidatedFile(File file, long minimumBlockHeight, long maximumBlockHeight){
         List<CycleDigest> cycleDigests = new ArrayList<>();
     
@@ -270,6 +282,7 @@ public class CycleDigestManager {
         return new File(consolidatedBlockFile.getAbsolutePath().replace("nyzoblock", "cycledigest"));
     }
 
+    // Returns the last cycle digest stored on this system
     private static CycleDigest getLastCycleDigestEntry(){
         CycleDigest lastIndividualCycleDigestEntry = CycleDigestManager.findHighestIndividualCycleDigestEntry();
         CycleDigest lastConsolidatedCycleDigestEntry = CycleDigestManager.findHighestConsolidatedCycleDigestEntry();
@@ -287,6 +300,7 @@ public class CycleDigestManager {
         return lastCycleDigestEntry;
     }
 
+    // Returns the last cycle digest stored in an individual cycle digest file, on this system
     private static CycleDigest findHighestIndividualCycleDigestEntry(){
         long height = -1L;
         
@@ -324,10 +338,11 @@ public class CycleDigestManager {
         return CycleDigestManager.individualCycleDigestDirectory.listFiles(f -> f.getAbsolutePath().endsWith("cycledigest"));
     }
 
+    // Returns the last cycle digest stored in a consolidated cycle digest file, on this system
     private static CycleDigest findHighestConsolidatedCycleDigestEntry(){
         long fileHeight = -1L;
 
-        Long[] fileHeights = CycleDigestManager.getStoredConsolidatedCycleDigestFileHeights(Long.MAX_VALUE);
+        Long[] fileHeights = CycleDigestManager.getStoredConsolidatedCycleDigestFileHeights((Integer.MAX_VALUE * CycleDigestManager.cycleDigestsPerFile));
         
         if(fileHeights.length > 0){
             List<Long> fileHeightList = Arrays.asList(fileHeights);
@@ -356,7 +371,7 @@ public class CycleDigestManager {
     // Returns the consolidated cycle digest file heights up until the point of exhaustion or the occurrence of a gap in file heights
     private static Long[] getStoredConsolidatedCycleDigestFileHeights(long blockHeight) {
         int maxAmountOfFiles = (int) (blockHeight / BlockManager.blocksPerFile);
-        Long[] consolidatedCycleDigestHeights = new Long[maxAmountOfFiles];
+        List<Long> consolidatedCycleDigestHeights = new ArrayList<Long>();
 
         for(int i=0; i<maxAmountOfFiles; i++){
             File file = CycleDigestManager.getConsolidatedCycleDigestFile(i);
@@ -375,7 +390,7 @@ public class CycleDigestManager {
 
                 }
 
-                if(consolidatedCycleDigestHeights.length == 0){
+                if(consolidatedCycleDigestHeights.size() == 0){
                     // The cycle digests start off at block 0 and then move on forward, using the previous block as reference
                     // Should the file for this height not exist, all subsequent cycle digest file heights are considered invalid
                     if(fileHeight != 0){
@@ -384,18 +399,18 @@ public class CycleDigestManager {
                 } else {
                     // Akin to the principle in regards to height 0 above, any and all cycle digest file heights subsequent to the first interrupt/gap are considered invalid
                     // This is a redundant check, a non existing file should lead to a break before this evaluates to true
-                    if((consolidatedCycleDigestHeights[consolidatedCycleDigestHeights.length - 1] + 1) != fileHeight){
+                    if((consolidatedCycleDigestHeights.get(consolidatedCycleDigestHeights.size() - 1) + 1) != fileHeight){
                         break;
                     }
                 }
 
-                consolidatedCycleDigestHeights[consolidatedCycleDigestHeights.length] = fileHeight;
+                consolidatedCycleDigestHeights.add(fileHeight);
             } else {
                 // Cycle digest file does not exist
                 break;
             }
         }
 
-        return consolidatedCycleDigestHeights;
+        return consolidatedCycleDigestHeights.toArray(new Long[consolidatedCycleDigestHeights.size()]);
     }
 }
