@@ -20,7 +20,7 @@ import co.nyzo.verifier.util.UpdateUtil;
 // todo
 public class CycleDigestManager {
     public static final String startManagerKey = "start_cycle_digest_manager";
-    private static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, false); // todo check
+    private static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, true);
 
     public static final File individualCycleDigestDirectory = BlockManager.individualBlockDirectory;
     public static final long cycleDigestsPerFile = BlockManager.blocksPerFile;
@@ -34,7 +34,7 @@ public class CycleDigestManager {
             new Thread(new Runnable() {
                 @Override
                 public void run(){
-                    createCycleDigests();
+                    CycleDigestManager.createCycleDigests();
 
                     while(!UpdateUtil.shouldTerminate()){
                         try {
@@ -44,7 +44,7 @@ public class CycleDigestManager {
                         } catch (Exception e){
 
                         } finally {
-                            createCycleDigests();    
+                            CycleDigestManager.createCycleDigests();    
                             CycleDigestFileConsolidator.consolidateCycleDigests();    
                         }
                     }
@@ -100,8 +100,6 @@ public class CycleDigestManager {
                 }
                 
                 // Could not load block, processing with and beyond this block height is not possible
-                // todo - when building from block 0 onwards, without the presence of any stored cycle digests which would make this possible
-                // todo - when considering building on a cycle digest > 0, for starters, the resource-managing aspect (avoid repetition, reliance on previous digest) needs to be taken into account 
                 if(block == null){
                     break;
                 }
