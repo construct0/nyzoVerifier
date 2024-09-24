@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import co.nyzo.verifier.util.PreferencesUtil;
+import co.nyzo.verifier.util.ThreadUtil;
 import co.nyzo.verifier.util.UpdateUtil;
 
 // todo catch blocks & determine how block file consolidator behaves/should behave when disabled, no offset or individual block files exist and the consolidated block files are unpacked to get the block necessary for creating that cycle digest
@@ -44,10 +45,8 @@ public class CycleDigestManager {
                             CycleDigestManager.createCycleDigests();    
 
                             for(int i=0; i<(delayForSeconds / 2) && !UpdateUtil.shouldTerminate(); i++){
-                                Thread.sleep(delayForSeconds * 10);
+                                ThreadUtil.sleep(delayForSeconds * 10);
                             }
-                        } catch (InterruptedException e){
-
                         } catch (Exception e) {
 
                         }
