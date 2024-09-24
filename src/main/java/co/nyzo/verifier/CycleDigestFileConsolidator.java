@@ -26,9 +26,23 @@ public class CycleDigestFileConsolidator {
     public static final String runOptionValueDisable = "disable";
     private static String runOption = PreferencesUtil.get(runOptionKey).toLowerCase();
 
-    public static final int runEverySeconds = 300;
+    // public static final int runEverySeconds = 300;
 
     //  todo fileIndex -> fileHeight to be in concordance w term in manager
+
+    static {
+        // Ensure the value is explicitly set to one of the enumerated values. The default is "delete" for the verifier
+        // and the sentinel. This conserves disk space, which reduces maintenance and improves robustness of these run
+        // modes. The default is "consolidate" for the client. The client never participates in blockchain creation,
+        // which weighs its emphasis more toward utility.
+        if (!runOption.equals(runOptionValueConsolidate) && !runOption.equals(runOptionValueDeleteOnly) && !runOption.equals(runOptionValueDisable)) {
+            if (RunMode.getRunMode() == RunMode.Client) {
+                runOption = runOptionValueConsolidate;
+            } else {
+                runOption = runOptionValueDeleteOnly;
+            }
+        }
+    }
 
     // public static void start(){
     //     // Ensure the value is explicitly set to one of the enumerated values. The default is "delete" for the verifier
@@ -69,6 +83,12 @@ public class CycleDigestFileConsolidator {
     // }
 
     public static void consolidateCycleDigests(){
+        
+
+        if(runOption.equals(CycleDigestFileConsolidator.runOptionValueDisable)){
+            return;
+        }
+
         try {
             // Get all cycle digest files in the individual directory
             File[] individualFiles = CycleDigestManager.individualCycleDigestDirectory.listFiles(f -> f.getAbsolutePath().endsWith("cycledigest"));
@@ -137,7 +157,7 @@ public class CycleDigestFileConsolidator {
     }
 
     private static boolean consolidateFiles(long fileHeight, List<File> individualFiles) {
-        boolean successful = false;
+        boolean successful;
 
         try {
             File consolidatedFile = CycleDigestManager.getConsolidatedCycleDigestFile(fileHeight);
