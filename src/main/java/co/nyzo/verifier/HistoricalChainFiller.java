@@ -15,7 +15,7 @@ public class HistoricalChainFiller {
 
     private static final String blockBaseUrlKey = "consolidated_block_base_url";
     private static final String blockBaseUrl = PreferencesUtil.get(blockBaseUrlKey,
-            "https://blocks.nyzo.co/blockFiles/");
+            "https://blocks.nyzo.org/");
     private static ChainSectionRetriever gapRetriever = null;
 
     public static void fillChainHistory() {

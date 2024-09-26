@@ -16,7 +16,7 @@ import java.util.Map;
 public class GraffitiScript implements NyzoScript {
 
     // This is the first NyzoScript. It was created to implement the processing necessary for
-    // http://tech.nyzo.co/micropay/graffitiExample.
+    // http://tech.nyzo.org/micropay/graffitiExample.
 
     // We plan to implement a mechanism with which NyzoScript implementations can be registered on clients. The
     // hard-coded implementation will serve as a testbed for this script mechanism.
