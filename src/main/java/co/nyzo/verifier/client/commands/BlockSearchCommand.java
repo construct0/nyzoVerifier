@@ -77,12 +77,10 @@ public class BlockSearchCommand implements Command {
         } catch (Exception ignored) {}
 
         long minimumTimestamp = -1L;
-        long maximumTimestamp = -1L;
 
         if(blockHeight >= 0){
             notices.add("Using block height of " + blockHeight + " for search");
             minimumTimestamp = BlockManager.startTimestampForHeight(blockHeight);
-            maximumTimestamp = BlockManager.startTimestampForHeight(blockHeight + 1L) - 1L;
         }
 
         CommandTable table = new CommandTable(
@@ -122,6 +120,7 @@ public class BlockSearchCommand implements Command {
                 }
             } catch (Exception e){
                 errors.add("Failed to find block");
+                block = null;
             }
 
             long frozenEdgeHeight = BlockManager.getFrozenEdgeHeight();

@@ -164,7 +164,7 @@ public class BalanceListCommand implements Command {
             }
 
             if(balanceList == null){
-                errors.add("balance list is null");
+                errors.add("Balance list is null");
             } else {
                 parentTable.addRow(
                     "metadata",

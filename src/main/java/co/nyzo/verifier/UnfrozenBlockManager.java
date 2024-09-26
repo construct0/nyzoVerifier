@@ -370,117 +370,21 @@ public class UnfrozenBlockManager {
         // The default vote count threshold
         int defaultVoteCountThreshold = votingPoolSize * (3 / 4);
 
-        // A first pathway
-        // A map of versions, one version for each in-cycle verifier node
-        // To lower network connectivity this is not requested before hand, other factors determine if a request should be performed, these factors can be found in the NodeManager.getInCycleNodeVersions function
-        Map<Node, Version> versionMap = NodeManager.getInCycleNodeVersions(false, 1);
-        
-        // The version map above pertains to nodes, one verifier can have multiple nodes running and skew the end result, the logic below reduces the map to verifier identifier:version whereby the version is the highest version for that identifier in the versionMap
-        Map<byte[], Version> identifierVersionMap = new HashMap<>();
+        // We calculate the default vote-count threshold. When voting is taking a long time, a threshold as low as 50% is acceptable. Each 60 seconds that pass since the leading block was verified reduces the number of needed votes by 1.
+        if(!BlockManager.inGenesisCycle()){
+            Block block = unfrozenBlockAtHeight(heightToFreeze, leadingHash);
 
-        // Every entry from the versionMap is checked
-        for(Node node : versionMap.keySet()){
-            Version nodeVersion = versionMap.get(node);
-            byte[] nodeIdentifier = node.getIdentifier();
+            if(block == null){
+                LogUtil.println("Could not determine unfrozen block at height " + heightToFreeze);
+            } else {
+                long timeSinceVerification = System.currentTimeMillis() - block.getVerificationTimestamp();
+                int timeBasedVoteReduction = (int)(Math.min(timeSinceVerification / 60000L, BlockManager.currentCycleLength() / 4));
+                defaultVoteCountThreshold -= timeBasedVoteReduction;
 
-            // An iterator is used to loop over the existing Map, since we may modify it within the following block
-            Iterator<byte[]> identifierVersionMapIterator = identifierVersionMap.keySet().iterator();
-
-            while(identifierVersionMapIterator.hasNext()) {
-                byte[] existingKey = identifierVersionMapIterator.next();
-
-                // If the identifier does occur as key in the Map
-                if(Arrays.equals(existingKey, nodeIdentifier)) {
-                    Version existingIdentifierVersion = identifierVersionMap.get(existingKey);
-
-                    if(existingIdentifierVersion != null) {
-                        // Version instance is not null
-                        // We check if the version of this node is larger than the already set version
-                        if((nodeVersion.getVersion() > existingIdentifierVersion.getVersion()) || (nodeVersion.getVersion() == existingIdentifierVersion.getVersion() && nodeVersion.getSubVersion() > existingIdentifierVersion.getSubVersion())) {
-                            // If it is, we replace it by the node's version
-                            identifierVersionMap.put(existingKey, nodeVersion);
-                        }
-                    } else {
-                        // Version instance is null, removing entry
-                        identifierVersionMap.remove(existingKey);
-                    }
-                }
-            }
-
-            // If the identifier does not occur as key in the Map
-            boolean identifierVersionEntryExists = false;
-
-            for(byte[] existingKey : identifierVersionMap.keySet()) {
-                if(Arrays.equals(existingKey, nodeIdentifier)) {
-                    identifierVersionEntryExists = true;
-                }
-            }
-
-            // It is added
-            if(!identifierVersionEntryExists){
-                identifierVersionMap.put(nodeIdentifier, nodeVersion);
-            }   
-        }
-
-        // All versions
-        Collection<Version> versionSet = identifierVersionMap.values();
-
-        // The minimum version and subversion required to be considered a "passing" verifier for the logic that follows.
-        int minimumVersion = 644;
-        int minimumSubVersion = 8;
-        int amountOfVerifiersPassing = 0;
-
-        for(int i=0; i < versionSet.size(); i++){
-            Version version = versionSet.iterator().next();
-
-            if(version.getVersion() > minimumVersion) {
-                amountOfVerifiersPassing++;
-                continue;
-            }
-
-            if(version.getVersion() == minimumVersion && version.getSubVersion() >= minimumSubVersion){
-                amountOfVerifiersPassing++;
+                // This is an extra check to ensure, and clearly show in code, that the voting threshold past the Genesis cycle is never less than half the cycle.
+                defaultVoteCountThreshold = Math.max((BlockManager.currentCycleLength() + 1) / 2, defaultVoteCountThreshold);
             }
         }
-
-        // The percentage of verifiers which passed, relative to the cycle length
-        double percentageOfVerifiersPassing = (amountOfVerifiersPassing / votingPoolSize) * 100;
-
-        // A secondary pathway
-        // The version's subversion is released on 25/01/2024
-        Calendar calendarStartDescend = Calendar.getInstance();
-        calendarStartDescend.set(2024, 01, 25);
-
-        // The current calendar
-        Calendar calendarNow = Calendar.getInstance(Locale.ENGLISH);
-
-        // We calculate the difference between both calendars
-        long daysSinceDescend = Math.abs(CalendarUtil.calculateDayDifference(calendarStartDescend, calendarNow));
-
-        // And we determine what an appropriate amount of default-vote threshold is, but we don't set it just yet.
-        int startPercentage = 100;
-        int decrementPerDay = 3;
-        long resultCalendarPercentage = (startPercentage - (decrementPerDay * daysSinceDescend));    
-        
-        // If 8 days have passed or more than 75% of verifiers have upgraded to the aforementioned minimum Version
-        if(resultCalendarPercentage < 75 || percentageOfVerifiersPassing > 75){
-            // We calculate the default vote-count threshold. When voting is taking a long time, a threshold as low as 50% is acceptable. Each 60 seconds that pass since the leading block was verified reduces the number of needed votes by 1.
-
-            if(!BlockManager.inGenesisCycle()){
-                Block block = unfrozenBlockAtHeight(heightToFreeze, leadingHash);
-
-                if(block == null){
-                    LogUtil.println("Could not determine unfrozen block at height " + heightToFreeze);
-                } else {
-                    long timeSinceVerification = System.currentTimeMillis() - block.getVerificationTimestamp();
-                    int timeBasedVoteReduction = (int)(Math.min(timeSinceVerification / 60000L, BlockManager.currentCycleLength() / 4));
-                    defaultVoteCountThreshold -= timeBasedVoteReduction;
-
-                    // This is an extra check to ensure, and clearly show in code, that the voting threshold past the Genesis cycle is never less than half the cycle.
-                    defaultVoteCountThreshold = Math.max((BlockManager.currentCycleLength() + 1) / 2, defaultVoteCountThreshold);
-                }
-            }
-        }   
 
         // If the vote count is greater than the threshold, freeze the block. Previously there was a delay ad a second check here, but it will no longer have any effect due to the new vote-flip mechanism.
         int voteCountThreshold = thresholdOverrides.containsKey(heightToFreeze) ?
