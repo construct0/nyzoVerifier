@@ -1029,4 +1029,17 @@ public class Block implements MessageObject {
                 PrintUtil.compactPrintByteArray(getHash()) + ", id=" +
                 PrintUtil.compactPrintByteArray(getVerifierIdentifier()) + "]";
     }
+
+    public String toStringVerbose(){
+        return this.toString().replace("]", ", ")
+               + "genesisBlockHash=" + ByteUtil.arrayAsStringWithDashes(Block.genesisBlockHash) + ", "
+               + "previousBlockHash=" + ByteUtil.arrayAsStringWithDashes(this.previousBlockHash) + ", "
+               + "startTimestamp=" + this.startTimestamp + ", "
+               + "verificationTimestamp=" + this.verificationTimestamp + ", "
+               + "transactionsSize=" + this.transactions.size() + ", "
+               + "balanceListHash=" + ByteUtil.arrayAsStringWithDashes(balanceListHash) + ", "
+               + "verifierSignature=" + ByteUtil.arrayAsStringNoDashes(verifierSignature) + ", "
+               + "]"
+               ;
+    }
 }

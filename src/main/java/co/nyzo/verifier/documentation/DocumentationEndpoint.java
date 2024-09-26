@@ -259,7 +259,7 @@ public class DocumentationEndpoint implements EndpointResponseProvider {
 
             if (!transaction.isEmpty() && !supplementalTransaction.isEmpty()) {
                 // Forward the transaction to the client.
-                String clientFullUrl = "https://client.nyzo.co/api/forwardTransaction?transaction=" + transaction +
+                String clientFullUrl = "https://client0.nyzo.org/api/forwardTransaction?transaction=" + transaction +
                         "&supplementalTransaction=" + supplementalTransaction;
                 String clientResponse = NetworkUtil.stringForUrl(clientFullUrl, 1500);
 
