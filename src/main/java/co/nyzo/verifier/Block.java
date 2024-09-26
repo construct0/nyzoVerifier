@@ -232,15 +232,18 @@ public class Block implements MessageObject {
     }
 
     public CycleInformation getCycleInformation() {
+        return this.getCycleInformation(false);
+    }
 
-        if (cycleInformation == null) {
-            calculateCycleInformation();
+    public CycleInformation getCycleInformation(boolean eager){
+        if(cycleInformation == null){
+            calculateCycleInformation(eager);
         }
 
         return cycleInformation;
     }
 
-    private void calculateCycleInformation() {
+    private void calculateCycleInformation(boolean eager) {
 
         // This is the new method. It finds the maximum cycle length of any block in the previous three cycles.
         Block blockToCheck = this;
@@ -302,7 +305,30 @@ public class Block implements MessageObject {
                 }
             }
 
-            blockToCheck = blockToCheck.getPreviousBlock();
+            // Attempt to get the block from memory
+            Block previousBlock = blockToCheck.getPreviousBlock();
+
+            if(!reachedGenesisBlock && previousBlock == null && eager){
+                try {
+                    // Attempt to get the frozen block from memory
+                    previousBlock = BlockManager.frozenBlockForHeight(blockToCheck.height - 1);
+
+                    // Attempt to get the frozen block without writing individual files to disk in the process
+                    if(previousBlock == null){
+                        previousBlock = HistoricalBlockManager.blockForHeight(blockToCheck.height - 1);
+                    }
+
+                    // Attempt to get the frozen block by extracting the consolidated file for that height, which writes all individual blocks contained therein to disk in the process
+                    // If the block file consolidator consolidated individual block files these will be consolidated again in the future
+                    if(previousBlock == null){
+                        previousBlock = BlockManager.loadBlockFromFile(blockToCheck.height - 1);
+                    }
+                } catch (Exception e){
+                    previousBlock = null;
+                }
+            }
+
+            blockToCheck = previousBlock;
         }
 
         // If we found four full cycles or if we reached the beginning of the chain, we can build the
