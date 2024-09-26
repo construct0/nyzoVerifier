@@ -123,18 +123,36 @@ public class TransactionSearchCommand implements Command {
                 new CommandTableHeader("transaction (Nyzo string)", "transactionNyzoString", true));
         if (minimumTimestamp > 0) {
             long height = BlockManager.heightForTimestamp(minimumTimestamp);
-            Block block = BlockManager.frozenBlockForHeight(height);
-            if (block == null) {
-                block = HistoricalBlockManager.blockForHeight(height);
+            Block block = null;
+
+            try {
+                // Attempt to get the frozen block from memory
+                block = BlockManager.frozenBlockForHeight(height);
+
+                // Attempt to get the frozen block without writing individual files to disk in the process
+                if(block == null){
+                    block = HistoricalBlockManager.blockForHeight(height);
+                }
+
+                // Attempt to get the frozen block by extracting the consolidated file for that height, which writes all individual blocks contained therein to disk in the process
+                // If the block file consolidator consolidated individual block files these will be consolidated again in the future
+                if(block == null){
+                    block = BlockManager.loadBlockFromFile(height);
+                }
+
+                // Failed to find block, adding an error to indicate no exception occurred
+                if(block == null){
+                    errors.add("Failed to find block for height " + height);
+                }
+            } catch (Exception e){
+                block = null;
             }
+
             long frozenEdgeHeight = BlockManager.getFrozenEdgeHeight();
-            long retentionEdgeHeight = BlockManager.getRetentionEdgeHeight();
             List<Transaction> transactions = new ArrayList<>();
+
             if (block == null && height > frozenEdgeHeight) {
                 errors.add("Block " + height + " is past the frozen edge, " + frozenEdgeHeight + ", on this system");
-            } else if (block == null && height < BlockManager.getRetentionEdgeHeight()) {
-                errors.add("Block " + height + " is behind the retention edge, " + retentionEdgeHeight +
-                        ", on this system");
             } else if (block == null) {
                 errors.add("Block " + height + " is not available on this system");
             } else {
