@@ -13,12 +13,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class HistoricalBlockManager {
 
     public static final String startManagerKey = "start_historical_block_manager";
+    public static final boolean startManager = PreferencesUtil.getBoolean(startManagerKey, false);
+
+    public static final String offsetBuildThrottlingKey = "historical_block_offset_build_throttling";
+    public static final boolean offsetBuildThrottling = PreferencesUtil.getBoolean(offsetBuildThrottlingKey, true);
+
     private static final AtomicBoolean alive = new AtomicBoolean(false);
 
     public static void start() {
 
         // Start the manager if the preference indicates. Resource usage is not trivial, so the default is false.
-        if (PreferencesUtil.getBoolean(startManagerKey, false) && !alive.getAndSet(true)) {
+        if (startManager && !alive.getAndSet(true)) {
+            if(offsetBuildThrottling){
+                LogUtil.println("[INFO][HistoricalBlockManager]: offset build throttling is enabled, one offset file is built every 5 minutes for one consolidated block file containing 1000 blocks");
+            } else {
+                LogUtil.println("[INFO][HistoricalBlockManager]: offset build throttling is disabled, a large amount of system resources are dedicated to building offset files quickly");
+            }
 
             new Thread(new Runnable() {
                 @Override
@@ -26,13 +36,15 @@ public class HistoricalBlockManager {
 
                     while (!UpdateUtil.shouldTerminate()) {
                         try {
-                            // Sleep for 5 minutes (300 seconds) in 3-second increments. This is a process that provides
-                            // access to 1000-block sections of the Nyzo blockchain history, so each unit of work for
-                            // this process covers 7000 seconds of the blockchain. Sleeping for five minutes between
-                            // iterations keeps resource usage at a reasonable rate while leaving plenty of room for
-                            // eventually building and indexing a full history on this node.
-                            for (int i = 0; i < 100; i++) {
-                                ThreadUtil.sleep(3000);
+                            if(offsetBuildThrottling){
+                                // Sleep for 5 minutes (300 seconds) in 3-second increments. This is a process that provides
+                                // access to 1000-block sections of the Nyzo blockchain history, so each unit of work for
+                                // this process covers 7000 seconds of the blockchain. Sleeping for five minutes between
+                                // iterations keeps resource usage at a reasonable rate while leaving plenty of room for
+                                // eventually building and indexing a full history on this node.
+                                for (int i = 0; i < 100; i++) {
+                                    ThreadUtil.sleep(3000);
+                                }
                             }
 
                             // Build an offset file.
