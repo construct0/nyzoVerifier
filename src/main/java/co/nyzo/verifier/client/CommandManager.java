@@ -19,6 +19,7 @@ public class CommandManager {
             new CycleTransactionSignCommand(),
             new TransactionIndexedSearchCommand(),
             new TransactionSearchCommand(),
+            new BlockSearchCommand(),
             new CoinsInCirculationCommand(),
             new FrozenEdgeCommand(),
             new TransactionForwardCommand(),
