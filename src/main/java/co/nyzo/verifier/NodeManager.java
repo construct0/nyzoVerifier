@@ -37,9 +37,6 @@ public class NodeManager {
     private static boolean haveNodeHistory = PersistentData.getBoolean(haveNodeHistoryKey, false);
     public static final File nodeFile = new File(Verifier.dataRootDirectory, "nodes");
 
-    private static Map<Node, Version> incycleNodeVersionMap = new ConcurrentHashMap<>();
-    private static long incycleNodeVersionMapLastHydratedTimestamp = 0;
-
     static {
         loadPersistedNodes();
     }
@@ -209,16 +206,6 @@ public class NodeManager {
     public static boolean inCycleVerifierIsActive(ByteBuffer identifier){
         return activeCycleIdentifiers.contains(identifier);
     }
-
-    public static Map<Node, Version> getInCycleNodeVersions(boolean requestBeforehand, int versionRequestReason){
-        if(requestBeforehand || incycleNodeVersionMapLastHydratedTimestamp < (System.currentTimeMillis() - 900000L)) {
-            incycleNodeVersionMapLastHydratedTimestamp = System.currentTimeMillis();
-            NodeManager.sendVersionRequests(activeCycleIpAddresses.size(), true, versionRequestReason < 0 ? 0 : versionRequestReason, null);
-
-        }
-
-        return incycleNodeVersionMap;
-    }
  
     public static boolean connectedToMesh() {
 
@@ -311,75 +298,6 @@ public class NodeManager {
         NodeManager.activeCycleIdentifiers = activeCycleIdentifiers;
         NodeManager.activeCycleIpAddresses = activeCycleIpAddresses;
         NodeManager.missingInCycleVerifiers = missingInCycleVerifiers.toString();
-    }
-
-    public static void sendVersionRequests(int count, boolean inCycleOnly, int versionRequestReason, MessageCallback messageCallback){
-        if(count <= 0){
-            LogUtil.println("[NodeManager] Sending version requests to 0 nodes or less is not supported");
-            return;
-        }
-
-        if(!inCycleOnly){
-            LogUtil.println("[NodeManager] Sending version requests to queue nodes is currently not implemented");
-            return;
-        }
-
-        LogUtil.println("[NodeManager] Sending " + count + " version requests..");
-
-        try {
-            Set<ByteBuffer> ipAddresses = NodeManager.activeCycleIpAddresses;
-
-            // Only used when messageCallback is null
-            Map<Node, Version> result = new ConcurrentHashMap<Node, Version>();
-
-            for(int i = 0; i < count; i++){
-                ByteBuffer ipAddressBuffer = null;
-
-                try {
-                    ipAddressBuffer = ipAddresses.iterator().next();
-                } catch (NoSuchElementException e){
-                    break;
-                }
-                
-                if(ipAddressInCycle(ipAddressBuffer)){
-                    Node existingNode = ipAddressToNodeMap.get(ipAddressBuffer);
-
-                    if(existingNode == null){
-                        continue;
-                    }
-
-                    if(existingNode.getPortTcp() <= 0){
-                        continue;
-                    }
-
-                    Message versionRequestMessage = new Message(MessageType.VersionRequest55, new VersionRequest(versionRequestReason));
-
-                    Message.fetchTcp(IpUtil.addressAsString(ipAddressBuffer.array()), existingNode.getPortTcp(), versionRequestMessage, messageCallback != null ? messageCallback :
-                        new MessageCallback() {
-                            @Override
-                            public void responseReceived(Message message) {
-                                if (message != null && message.getContent() instanceof VersionResponse) {
-                                    VersionResponse response = (VersionResponse)message.getContent();
-
-                                    if(result.getOrDefault(existingNode, null) != null){
-                                        return;
-                                    }
-
-                                    result.put(existingNode, new Version(response.getVersion(), response.getSubVersion()));
-                                }
-                            }
-                        }
-                    );
-                }
-            }
-
-            if(messageCallback == null){
-                incycleNodeVersionMap = result;
-            }
-        } catch (Exception e){
-            LogUtil.println("[NodeManager][1/2] Failed to send " + count + " version requests");
-            LogUtil.println("[NodeManager][2/2] " + e.getStackTrace().toString());
-        }
     }
 
     public static void enqueueNodeJoinMessage(byte[] ipAddress, int port) {
