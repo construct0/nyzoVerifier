@@ -333,7 +333,7 @@ public class Verifier {
                 buffer.rewind();
                 genesisBlock = Block.fromByteBuffer(buffer);
 
-                LogUtil.println("[Verifier][loadGenesisBlock]: fetched block: " + genesisBlock.toString());
+                LogUtil.println("[Verifier][loadGenesisBlock]: fetched block: " + genesisBlock.toStringVerbose());
 
             } catch (Exception e) {
                 LogUtil.println("[Verifier][loadGenesisBlock]: " + e.toString() + ",\r\n" + e.getStackTrace().toString());
