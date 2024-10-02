@@ -32,9 +32,10 @@ public class Client {
         // If the data manager started properly and no ambiguous command strings exist, continue. Otherwise, display
         // error messages and terminate.
         if (startedDataManager && ambiguousCommandStrings.isEmpty()) {
-            // Start the block file consolidator, historical block manager, transaction indexer, and web listener.
+            // Start the block file consolidator, historical block manager, cycle digest manager & consolidator, transaction indexer, and web listener.
             BlockFileConsolidator.start();
             HistoricalBlockManager.start();
+            CycleDigestManager.start();
             TransactionIndexer.start();
             WebListener.start();
 
