@@ -456,7 +456,7 @@ public class BlockManager {
         long height = -1L;
 
         try {
-            List<File> files = Arrays.asList(individualBlockDirectory.listFiles());
+            List<File> files = Arrays.asList(individualBlockDirectory.listFiles(f -> f.getAbsolutePath().endsWith(".nyzoblock")));
 
             Collections.sort(files, new Comparator<File>() {
                 @Override

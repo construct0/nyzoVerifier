@@ -70,8 +70,8 @@ public class BlockFileConsolidator {
 
     private static void consolidateFiles() {
 
-        // Get all files in the individual directory.
-        File[] individualFiles = BlockManager.individualBlockDirectory.listFiles();
+        // Get all block files in the individual directory.
+        File[] individualFiles = BlockManager.individualBlockDirectory.listFiles(f -> f.getAbsolutePath().endsWith(".nyzoblock"));
 
         // Files behind the retention edge are consolidated. If the retention edge is not available, step back 5 cycles.
         // This will prevent accumulation of excessive individual files due to discontinuities.
