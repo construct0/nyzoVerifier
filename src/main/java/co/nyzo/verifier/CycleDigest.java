@@ -218,7 +218,7 @@ public class CycleDigest implements MessageObject {
         // block or 4 cycles were found.
         this.complete = identifiers.size() == blockHeight + 1 |  // extends to Genesis block
                 cycleStartIndices[requiredCyclesForCompleteness - 1] > 0;
-        System.out.println("cycleCount=" + cycleCount + ", complete=" + complete + ", height=" + blockHeight);
+        // System.out.println("cycleCount=" + cycleCount + ", complete=" + complete + ", height=" + blockHeight);
     }
 
     private void calculateCycleLengths() {
@@ -361,10 +361,14 @@ public class CycleDigest implements MessageObject {
     }
 
     public static CycleDigest fromFileForHeight(long height) {
+        return CycleDigest.fromFile(CycleDigest.fileForHeight(height));
+    }
+
+    public static CycleDigest fromFile(File file){
 
         CycleDigest digest = null;
         try {
-            byte[] fileBytes = Files.readAllBytes(Paths.get(fileForHeight(height).getAbsolutePath()));
+            byte[] fileBytes = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
             digest = CycleDigest.fromByteBuffer(ByteBuffer.wrap(fileBytes));
         } catch (Exception ignored) { }
 

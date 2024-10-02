@@ -3,7 +3,7 @@ package co.nyzo.verifier;
 public class Version {
 
     private int version = 647;
-    private int subVersion = 0;
+    private int subVersion = 1;
 
     public Version(){
 
