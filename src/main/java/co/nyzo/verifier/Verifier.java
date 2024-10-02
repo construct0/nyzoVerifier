@@ -331,6 +331,7 @@ public class Verifier {
                 channel.close();
 
                 buffer.rewind();
+                short amountOfBlocks = buffer.getShort();
                 genesisBlock = Block.fromByteBuffer(buffer);
 
                 LogUtil.println("[Verifier][loadGenesisBlock]: fetched block: " + genesisBlock.toStringVerbose());
