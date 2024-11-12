@@ -32,7 +32,7 @@ public class CycleDigestManager {
     private static final long maxCreateBatchSize = 5000L;
 
     // Delay between consolidate & create runs
-    private static final long delayForSeconds = 30L;
+    private static final long delayForSeconds = 20L;
 
     public static void start(){
         if(startManager && !alive.getAndSet(true)){
@@ -71,9 +71,6 @@ public class CycleDigestManager {
             // Either the start + the maximum amount of cycle digests which are created in this call or the frozen edge height + 1, whichever is lower
             long stopBeforeBlockHeight = Math.min(startAtBlockHeight + CycleDigestManager.maxCreateBatchSize, frozenEdge.getBlockHeight() + 1);
     
-            // Stores the last cycle digest instance which was successfully written to disk during this call
-            CycleDigest rollingCycleDigest = null;
-    
             // The block from which the producer's verifier identifier is extracted
             Block block;
 
@@ -102,29 +99,31 @@ public class CycleDigestManager {
                 // The cycle digest to be written to an individual file
                 CycleDigest cycleDigest = null;
                 
-                // If no cycle digest (file) is present on this system
                 if(lastCycleDigest == null || block.getBlockHeight() == 0){
+                    // If no cycle digest (file) is present on this system
                     // The cycle digest is created and the suggested block height argument is provided
-                    // No previous digest is provided thus creating a cycle digest for the provided block height
-                    cycleDigest = CycleDigest.digestForNextBlock(null, block.getVerifierIdentifier(), block.getBlockHeight());
+                    // No previous digest is provided thus creating a cycle digest for the genesis block at height 0
+                    cycleDigest = CycleDigest.digestForNextBlock(null, block.getVerifierIdentifier(), 0);
                 } else {
                     // A cycle digest (file) is present on this system
                     // The suggested block height argument is set to -1, as it will not be used, the block height for the new cycle digest is determined from the previous cycle digest provided
-                    if(rollingCycleDigest == null){
-                        // No cycle digest was written to disk yet during this call, the last cycle digest & the next block are used to start and create the next digest with
-                        if((lastCycleDigest.getBlockHeight() + 1) == block.getBlockHeight()){
-                            cycleDigest = CycleDigest.digestForNextBlock(lastCycleDigest, block.getVerifierIdentifier(), -1L); 
-                        } 
-                    } else {
-                        // A cycle digest was written to disk during this call, using its instance & the next block to create the next digest
-                        if((rollingCycleDigest.getBlockHeight() + 1) == block.getBlockHeight()){
-                            cycleDigest = CycleDigest.digestForNextBlock(rollingCycleDigest, block.getVerifierIdentifier(), -1L);
-                        }
-                    }
+                    // No cycle digest was written to disk yet during this call, the last cycle digest & the next block are used to start and create the next digest with
+                    if((lastCycleDigest.getBlockHeight() + 1) == block.getBlockHeight()){
+                        cycleDigest = CycleDigest.digestForNextBlock(lastCycleDigest, block.getVerifierIdentifier(), -1L); 
+                    } 
                 }
                 
                 if(cycleDigest != null){
                     // The conditions were met and creating the next cycle digest instance was successful
+
+                    boolean notContinuousDuringGenesisCycle = cycleDigest.isInGenesisCycle() && (cycleDigest.getContinuityState() != ContinuityState.Continuous);
+                    boolean otherwiseDiscontinuous = cycleDigest.getContinuityState() == ContinuityState.Discontinuous;
+
+                    if(notContinuousDuringGenesisCycle || otherwiseDiscontinuous) {
+                        // One or more Proof-of-diversity consensus rules were broken
+                        break;
+                    }
+                    
                     boolean writeSuccessful = CycleDigestManager.writeCycleDigestToIndividualFile(cycleDigest);
                     
                     if(!writeSuccessful){
@@ -133,7 +132,7 @@ public class CycleDigestManager {
                     }
                     
                     // Writing was successful, store the persisted cycle digest to create the next cycle digest in the next iteration, if any
-                    rollingCycleDigest = cycleDigest;
+                    lastCycleDigest = cycleDigest;
                 } else {
                     // None of the conditions above were met, no cycle digest was created & written to disk, next iteration may not be performed
                     break;
