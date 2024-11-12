@@ -26,14 +26,10 @@ public class CycleDigestFileConsolidator {
     static {
         // Ensure the value is explicitly set to one of the enumerated values. The default is "delete" for the verifier
         // and the sentinel. This conserves disk space, which reduces maintenance and improves robustness of these run
-        // modes. The default is "consolidate" for the client. The client never participates in blockchain creation,
-        // which weighs its emphasis more toward utility.
+        // modes. The default is "delete" for the client as well. The client never participates in blockchain creation,
+        // but is likely to store many or all blocks on-disk, which can result in an unnecessarily exuberant amount of disk space required.
         if (!runOption.equals(runOptionValueConsolidate) && !runOption.equals(runOptionValueDeleteOnly) && !runOption.equals(runOptionValueDisable)) {
-            if (RunMode.getRunMode() == RunMode.Client) {
-                runOption = runOptionValueConsolidate;
-            } else {
-                runOption = runOptionValueDeleteOnly;
-            }
+            runOption = runOptionValueDeleteOnly;
         }
     }
 
