@@ -168,11 +168,11 @@ public class BlockManager {
         File temporaryFile = new File(file.getAbsolutePath() + "_temp");
         temporaryFile.delete();
 
-        // Attempt to write the file.
+        // Attempt to write the temporary file.
         boolean successful = true;
         try {
-            // Open the file. The "rw" argument makes the file writable.
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            // Open the temporary file. The "rw" argument makes the file writable.
+            RandomAccessFile randomAccessFile = new RandomAccessFile(temporaryFile, "rw");
 
             // Sort the blocks on block height ascending.
             blocks.sort(new Comparator<Block>() {
@@ -203,13 +203,13 @@ public class BlockManager {
                 }
             }
 
-            // Close the file.
+            // Close the temporary file.
             randomAccessFile.close();
         } catch (Exception ignored) {
             successful = false;
         }
 
-        // If the write was successful, move the file to the permanent location. Otherwise, delete it.
+        // If the write was successful, move the temporary file to the permanent location. Otherwise, delete it.
         if (successful) {
             Path temporaryPath = Paths.get(temporaryFile.getAbsolutePath());
             Path path = Paths.get(file.getAbsolutePath());
