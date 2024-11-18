@@ -356,7 +356,7 @@ public class CycleDigestManager {
     private static CycleDigest findHighestConsolidatedCycleDigestEntry(){
         long fileHeight = -1L;
 
-        Long[] fileHeights = CycleDigestManager.getStoredConsolidatedCycleDigestFileHeights((Integer.MAX_VALUE * CycleDigestManager.cycleDigestsPerFile));
+        Long[] fileHeights = CycleDigestManager.getStoredConsolidatedCycleDigestFileHeights(BlockManager.getFrozenEdgeHeight());
         
         if(fileHeights.length > 0){
             List<Long> fileHeightList = Arrays.asList(fileHeights);
@@ -384,7 +384,7 @@ public class CycleDigestManager {
 
     // Returns the consolidated cycle digest file heights up until the point of exhaustion or the occurrence of a gap in file heights
     private static Long[] getStoredConsolidatedCycleDigestFileHeights(long blockHeight) {
-        int maxAmountOfFiles = (int) (blockHeight / BlockManager.blocksPerFile);
+        int maxAmountOfFiles = (int) (blockHeight / BlockManager.blocksPerFile + 1L);
         List<Long> consolidatedCycleDigestHeights = new ArrayList<Long>();
 
         for(int i=0; i<maxAmountOfFiles; i++){
@@ -406,8 +406,7 @@ public class CycleDigestManager {
 
                 // If the list of file heights is not empty
                 if(consolidatedCycleDigestHeights.size() != 0){
-                    // Any and all cycle digest file heights subsequent to the first interrupt/gap are considered invalid
-                    // This is a redundant check, a non existing file should lead to a break before this evaluates to true
+                    // Any and all cycle digest file heights subsequent to and including the first interrupt/gap are considered invalid
                     if((consolidatedCycleDigestHeights.get(consolidatedCycleDigestHeights.size() - 1) + 1) != fileHeight){
                         break;
                     }
@@ -419,9 +418,6 @@ public class CycleDigestManager {
                 }
 
                 consolidatedCycleDigestHeights.add(fileHeight);
-            } else {
-                // Cycle digest file does not exist
-                break;
             }
         }
 
