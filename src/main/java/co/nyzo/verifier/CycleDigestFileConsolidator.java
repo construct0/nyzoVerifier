@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import co.nyzo.verifier.util.LogUtil;
 import co.nyzo.verifier.util.PreferencesUtil;
@@ -78,6 +79,49 @@ public class CycleDigestFileConsolidator {
 
                         filesForFileHeight.add(file);
                     }
+                }
+            }
+
+            // In order to guarantuee continuation by the CycleDigestManager it's required to determine which file must be excluded from consolidation and/or deletion  
+            
+            // Attempt to determine the largest consolidated file height
+            Optional<Long> largestConsolidatedFileHeight = fileMap.keySet().stream().max(Long::compareTo);
+
+            if(largestConsolidatedFileHeight.isPresent()){
+                // The map is not empty and the largest consolidated file height has been determined
+                // Attempt to determine the individual file with the largest individual file height
+
+                File lastIndividualFile = null;
+
+                try {
+                    List<File> relevantIndividualFiles = fileMap.get(largestConsolidatedFileHeight.get());
+
+                    // Sort the individual files in descending order
+                    Collections.sort(relevantIndividualFiles, new Comparator<File>() {
+                        @Override
+                        public int compare(File file1, File file2) {
+                            return file2.getName().compareTo(file1.getName());
+                        }
+                    });
+
+                    // Attempt to determine the largest individual file height
+                    for (int i = 0; i < relevantIndividualFiles.size() && lastIndividualFile == null; i++) {
+                        try {
+                            // Attempt to extract and parse the file height
+                            Long.parseLong(relevantIndividualFiles.get(i).getName().replace("i_", "").replace(".cycledigest", ""));
+                            
+                            // Parsing successful, set the value for the individual file with the largest file height
+                            lastIndividualFile = relevantIndividualFiles.get(i);
+                        } catch (Exception ignored) { }
+                    }
+                } catch (Exception ignored) { }
+
+                if(lastIndividualFile != null){
+                    // If available, remove the individual file for the largest consolidated file height, excluding it from consolidation and/or deletion
+                    fileMap.get(largestConsolidatedFileHeight.get()).remove(lastIndividualFile);
+                } else {
+                    // As a redundancy, should determining the individual file have failed, resort to removing this particular consolidated file height, effectively excluding it, and its associated individual files, from further handling
+                    fileMap.remove(largestConsolidatedFileHeight.get());
                 }
             }
 
